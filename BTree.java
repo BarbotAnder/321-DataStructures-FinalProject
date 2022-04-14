@@ -1,34 +1,118 @@
+import java.io.RandomAccessFile;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Stack;
 
 public class BTree {
 
   private int T;
   private Node root;
-
+  private RandomAccessFile RAF;
+  private long nextAdd;
+  private int byteLength;
+//add 1 to array to start at one. This allows us to copy the book's code exactly
   public class Node {
     int n;
-    int key[]; //= new int[2t - 1]
-    Node child[]; // = new Node[2t]
+    TreeObject key[]; //= new int[2t - 1]
+    long child[]; // = new Node[2t]
+    long thisAddress;
+    long parentAddress;
+    int metaLength = 0;
+
     boolean leaf = true;
 
-    public Node(int t) {
-        key = new int[2 * t - 1];
-        child = new Node[2 * t];
+    public Node(int t, long parentAddress, long thisAddress) {
+        key = new TreeObject[2 * t - 1];
+        child = new long[2 * t];
     }
 
-    public int Find(int k) {
-      for (int i = 0; i < this.n; i++) {
-        if (this.key[i] == k) {
-          return i;
+    public Node(long address) {
+
+    }
+
+    /*
+     BTree_Insert_nonfull(x, k) **PseudoCode**
+    1 i = x.n
+    2 if (x.leaf) {
+        while(i >= 1 && k < x.keyi) {
+          x.key(i+1) = keyj
+          i++
         }
+        x.key(i+1) = k
+        x.n++
+        DISK_WRITE(x)
+    } else {
+        while(i >= 1 && k < x.keyi) {
+          i--
+        }
+        i++
+        DISK_READ(x, c1)
+    }
+    if (x.ci.n = 2t-1) {
+      BTree_Split.child(x, i, x.ci)
+      if (k > x.keyi) {
+        i++
       }
-      return -1;
-    };
+      BTree_Insert_nonfull(x.ci, k)
+    } else BTree_Insert_nonfull(x.ci, k)
+
+    BTree_Search(r, k)
+    if(r == null) {
+      return r;
+    }
+    if (k = r.key) {
+      return r;
+    }
+    if (k < r.key) {
+      return BSTSearch(r.left, k);
+    } else {
+      return BSTSearch(r.right, k);
+    }
+    */
+  }
+
+  /*
+  B-TREE-INSERT(T, k)
+    1 r = T.root
+    2 if r.n == 2t - 1
+    3   s = ALLOCATE-NODE()
+    4   T.root = s
+    5   s.leaf = FALSE
+    6   s.n = 0
+    7   s.c1 = r
+    8   B-TREE-SPLIT-CHILD(s, 1, r) //current node, child, node to be split
+    9   B-TREE-INSERT-NONFULL(s, k)
+    10 else B-TREE-INSERT-NONFULL(r, k)
+  */
+
+  public String Find(int k) {
+  
+  if(k < 1) {
+    return null;
+  }
+  int i = 0;
+  Queue<Node> q = new LinkedList<Node>();
+  q.add(root);
+  while(!q.isEmpty()) {
+    Node n = q.remove();
+    if (k == i) {
+      return n.toString();
+    } else {
+      i++;
+    }
+    if (!n.leaf) {
+      for (int j = 1; j <= n.n+1; j++) {
+        Node child = new Node(n.child[i]);
+        q.add(child);
+      }
+    }
+  }
+  return null;
   }
 
   public BTree(int t) {
     T = t;
-    root = new Node(t);
+    root = new Node(t, -1, 0);
     root.n = 0;
     root.leaf = true;
   }
@@ -61,7 +145,6 @@ public class BTree {
         int i = 0;
         for (i = 0; i < x.n && x.key[i] != key; i++) {
         }
-        ;
         for (; i < x.n; i++) {
           if (i != 2 * T - 2) {
             x.key[i] = x.key[i + 1];
@@ -89,9 +172,9 @@ public class BTree {
           return;
         }
 
-        Node nextNode = x.child[pos + 1];
+        long nextNode = x.child[pos + 1];
         if (nextNode.n >= T) {
-          int nextKey = nextNode.key[0];
+          TreeObject nextKey = nextNode.key[0];
           if (!nextNode.leaf) {
             nextNode = nextNode.child[0];
             for (;;) {
@@ -240,18 +323,6 @@ public class BTree {
     4 T.root = x
     5 DISK_WRITE(x)
 
-    B-TREE-INSERT(T, k)
-    1 r = T.root
-    2 if r.n == 2t - 1
-    3   s = ALLOCATE-NODE()
-    4   T.root = s
-    5   s.leaf = FALSE
-    6   s.n = 0
-    7   s.c1 = r
-    8   B-TREE-SPLIT-CHILD(s, 1, r) //current node, child, node to be split
-    9   B-TREE-INSERT-NONFULL(s, k)
-    10 else B-TREE-INSERT-NONFULL(r, k)
-
     B-TREE_SPLIT_CHILD(x, i, y) //x.ci = y
     1 z = ALLOCATE_NODE.
     2 z.leaf = y.leaf
@@ -272,44 +343,6 @@ public class BTree {
     17 DISK_WRITE(y)
     18 DISK_WRITE(z)
     19 DISK_WRITE(x)
-
-    BTree_Insert_nonfull(x, k) **PseudoCode**
-    1 i = x.n
-    2 if (x.leaf) {
-        while(i >= 1 && k < x.keyi) {
-          x.key(i+1) = keyj
-          i++
-        }
-        x.key(i+1) = k
-        x.n++
-        DISK_WRITE(x)
-    } else {
-        while(i >= 1 && k < x.keyi) {
-          i--
-        }
-        i++
-        DISK_READ(x, c1)
-    }
-    if (x.ci.n = 2t-1) {
-      BTree_Split.child(x, i, x.ci)
-      if (k > x.keyi) {
-        i++
-      }
-      BTree_Insert_nonfull(x.ci, k)
-    } else BTree_Insert_nonfull(x.ci, k)
-
-    BTree_Search(r, k)
-    if(r == null) {
-      return r;
-    }
-    if (k = r.key) {
-      return r;
-    }
-    if (k < r.key) {
-      return BSTSearch(r.left, k);
-    } else {
-      return BSTSearch(r.right, k);
-    }
 
     BTree_Search(x, k)
     1 i = 1

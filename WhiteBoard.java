@@ -1,4 +1,8 @@
 /*
+Test 1: Empty tree, add 3,1,2 (should end up with 1,2,3 (all 3 in root node, no children))
+Test 2: Add 4 (Should end up with 2, 1, 3, 4 (2 becomes new root, 1 is in left child node. 3,4 are in right child node))
+
+
 Two "main" classes
 a.) GeneBankCreateBTree 
 java GeneBankCreateBTree <0/1(no/with Cache)> <degree> <gbk file> <sequence length> [<cache size>] [<debug level>]
