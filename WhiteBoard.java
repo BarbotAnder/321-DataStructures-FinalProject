@@ -559,4 +559,53 @@ Cache
             }
     }
 
+A : 00 = 0
+C : 01 = 1
+G : 10 = 2
+T : 11 = 3
+
+2 = 10
+2 << 2 = 1000 = 8
+
+
+RetVal = 0     = A
+RetVal += 3 : 11     = T
+RetVal = RetVal << 2 : 1100      //bit shift left by 2 to add 2 zeros at end of sequence (Same as adding an A)
+RetVal += 1 : 1101    = TC       //ass 1 to new value to change 1100 to 1101 (Changes the "added A" to a C)
+RetVal = RetVal << 2 : 110100
+RetVal += 3 : 110111      = TCT
+RetVal = RetVal << 2 : 11011100
+Retval += 2 : 11011110     = TCTG  //Since this is the last value added, we do not bit shift after, since that is the same as adding an A
+
+
+
+
+
+
+
+
+
+//in BTree class
+
+GetNodeAtIndex(j) //level order traversal
+if (i < 1) {
+    return error;
+}
+q = new Queue();
+q.enqueue(root);
+while (!q.isEmpty()) {
+  n = q.dequeue
+  if (i == j) {
+    return n;
+  }
+  else {
+    i++;
+  }
+  if (!n.leaf) {
+    for (each childPointer C in n) {
+      child = DISK-READ(c)
+      q.enqueue(child)
+    }
+  }
+}
 */

@@ -33,7 +33,7 @@ public class BTree {
     root.leaf = true;
   }
 
-  // Search the key
+  //Search the key
   public Node Search(Node x, int key) {
     int i = 0;
     if (x == null)
@@ -366,26 +366,6 @@ public class BTree {
   }
 
   private Node root;
-
-  // Search the key
-  private Node Search(Node x, int key) {
-    int i = 0;
-    if (x == null)
-      return x;
-    for (i = 0; i < x.n; i++) {
-      if (key < x.key[i]) {
-        break;
-      }
-      if (key == x.key[i]) {
-        return x;
-      }
-    }
-    if (x.leaf) {
-      return null;
-    } else {
-      return Search(x.child[i], key);
-    }
-  }
 
   // Split function
   private void Split(Node x, int pos, Node y) {
