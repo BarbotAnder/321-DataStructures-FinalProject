@@ -12,15 +12,12 @@
     private static final int BUFFER_SIZE = 4096
 
     public static void main(String args[]) {
-        //what abt natively buffer stream?
-
-
-        //write to binary Stream
+        //write to File
         /*
-        String outputFile = args[1];
+        String outputFile = "GeneBankFile";
         try (
-            OutputStream outputStream = new FileOutputStream(outputFile);
-        ) {
+            OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputFile), BUFFER_SIZE);
+            ) {
             byte[] buffer = new byte[BUFFER_SIZE];
             long currentLong = -1;  //need conversion from string to long
             outputStream.write(buffer, 0, currentLong);
@@ -31,11 +28,12 @@
         */
 
 
-        //read from binary Stream
+        //read from File
         /*
-        String inputFile = args[0];
+        String inputFile = "GeneBankFile";
         try (
-        InputStream inputStream = new FileInputStream(inputFile);
+        InputStream inputStream = new BufferedInputStream(new FileInputStream(inputFile), BUFFER_SIZE);
+
         ) {
             byte[] buffer = new byte[BUFFER_SIZE];
             int bytesRead = -1;
