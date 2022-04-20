@@ -22,9 +22,8 @@
             OutputStream outputStream = new FileOutputStream(outputFile);
         ) {
             byte[] buffer = new byte[BUFFER_SIZE];
-            int bytesRead = -1;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
+            long currentLong = -1;  //need conversion from string to long
+            outputStream.write(buffer, 0, currentLong);
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -41,7 +40,7 @@
             byte[] buffer = new byte[BUFFER_SIZE];
             int bytesRead = -1;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
-            outputStream.write(buffer, 0, bytesRead);
+                currentLong = bytesRead; //will need to use this as is to search and the string version of it for dump (I haven't checked example dump to confirm)
             }
     
         } catch (IOException ex) {
