@@ -9,106 +9,181 @@ public class readfileTestClass {
 
 	
 	public static void main(String[] args) {
-		int letters = 0;
-		boolean exit = false;
-		int x = 0;
-		char letter;
+		readFile("testing.txt", 5);
+		
+		//System.out.println(letterCheck('a'));
+		
+	}
+	
+	private static void readFile(String filename, int degree) {
+		int letters; //used for keeping track of size of subsequence
+		boolean exit;
+		boolean endOfFile = false; // makes sure if we are at the end of the file
+		int x = 0; //used for next line tracking
+		char letter; //keeps track of the current data
 		boolean letterHadBefore = false;
-		int sequenceSize = 5;
-		File file = new File("testing.txt");
+		int sequenceSize = degree;  //where we implement the parameters
+		File file = new File(filename);
 		try {
+			
 			Scanner scan = new Scanner(file);
 			String nextLine = scan.nextLine();
 			String currentLine;
-			while(!nextLine.equals("ORIGIN")) { //searches for origin line	
-				nextLine = scan.nextLine();
-			}
-			nextLine = scan.nextLine(); 
-			while(!nextLine.equals("//")) {  
-				currentLine = nextLine;
-				nextLine = scan.nextLine(); //lineByLine is on the very first line of sequences
-				
-				System.out.println(currentLine);  //this just prints out what lines you are currently on and the next line
-				System.out.println(nextLine);
-				
-				for(int i = 0; i<currentLine.length(); i++) {
-					if(exit) { //this is for the very last case where the very last char will not be filled in
-						letter = 'w'; //so it sets it to a not valid character so it won't go through
-					}else {
-					letter = currentLine.charAt(i);
-					}
-					if(letter == 'a' || letter == 't' || letter == 'g' || letter == 'c') { //will have to individualize each case so that each binary representation can be set then added
-						System.out.print(letter); // "addes letter to list"
-						letters++;
-						int additions = 0; // additions reset to 0 for every new i index (represents everytime we hit a ' '
-						for(int j = 1; j<sequenceSize; j++) {
-							if(currentLine.length()-1 >= (i+j)) { // currentLine >= the char index remain in currentLine else go nextLine
-								letter = currentLine.charAt(i+j+additions); // additions is if we have passed over any spaces
-								if(letter == 'a' || letter == 't' || letter == 'g' || letter == 'c') { //valid letter
-									System.out.print(letter); //adds the letter
-									letters++;
-									if(letters == sequenceSize) { //if we have reached the selected size
-										System.out.println(""); //This is when we add a long to the tree
-										letters = 0;
-									}
-								}else if(letter == ' ') { //when the char is in the space
-									additions++; //add one
-									letter = currentLine.charAt(i+j+additions); //remakes the letter to the very next one
-									System.out.print(letter); //adds the letter, will later need to check what letter is is
-									letters++;
-									if(letters == sequenceSize) {  //if we have reached the selected size
-										System.out.println(""); //this is when you would add a long to the tree
-										letters = 0;
-									}
-								}else if(letter == 'n') { 
-									if(letters != 0) { // if we have letters in our sequence else do nothing
-										System.out.println(""); // reset the long
-										letters = 0; 
-									}
-								}
-							}else { //go into next line for last few spots of the sequence
-								if(!letterHadBefore) { //this checks if we have already been inside the next line for the same sequence
-									x = 0;
-								}
-								if(!nextLine.equals("//")) { //this checks if our nextline does not equal the end of our parsing
-									letter = nextLine.charAt(++x); //if we already been through next line once it will take the char after the previous one
-									while(letter != 'a' && letter != 't' && letter != 'c' && letter != 'g') { //finds the first letter
-										x++;
-										letter = nextLine.charAt(x);
-									}
-									letterHadBefore = true; // sets the we have now been through the next Line
-									System.out.print(letter); // add the letter, but will have to check which letter
-									letters++;
-									if(letters == sequenceSize) { //if we have reached the selected size
-										System.out.println(""); //this is when you would add a long to the tree
-										letters = 0;
-										letterHadBefore = false;
-									}
-								}else {
-									exit = true; //for the very last case, if we didn't do this the letter would remain the same and would add on
-								}
-							}
-						}
-					}
-				}	
-			}
-			boolean endOfFile = false; // makes sure if we are at the end of the file
-			while(!nextLine.equals("ORIGIN") && !endOfFile) { //searches for origin line	
+			
+			while(!nextLine.equals("ORIGIN") && !endOfFile) { //searches for the first origin line	
 				if(scan.hasNextLine()) {
 					nextLine = scan.nextLine();
-				}else {
+				} else {
 					endOfFile = true;
 				}
 			}
+			while(!endOfFile) {
+				exit = false;
+				letters = 0;
+				nextLine = scan.nextLine(); 
+				while(!nextLine.equals("//")) {  
+					currentLine = nextLine;
+					nextLine = scan.nextLine(); //lineByLine is on the very first line of sequences
+					
+					//TODO: remove print lines
+					System.out.println(currentLine);  //this just prints out what lines you are currently on and the next line
+					System.out.println(nextLine);
+					
+					for(int i = 0; i<currentLine.length(); i++) {
+						if(exit) { //this is for the very last case where the very last char will not be filled in
+							letter = 'w'; //so it sets it to a not valid character so it won't go through
+						}else {
+						letter = currentLine.charAt(i);
+						}
+						byte num = letterCheck(letter);
+						if(num >= 0) { //is the starting value for the subsequence valid
+							System.out.print(letter); //TODO: remove print line
+	
+							long subSequence = 0x0;
+							subSequence |= (num & 0x3); // puts last two bits into the long
+							subSequence = (subSequence << 2); //shifts over for the next bit to be added
+							letters++;
+							int additions = 0; // additions reset to 0 for every new i index (represents everytime we hit a ' '
+							for(int j = 1; j<sequenceSize; j++) {
+								if(currentLine.length()-1 >= (i+j)) { // currentLine >= the char index remain in currentLine else go nextLine
+									letter = currentLine.charAt(i+j+additions); // additions is if we have passed over any spaces
+									num = letterCheck(letter);
+									if(num >= 0) {
+										System.out.print(letter); //TODO: remove print line
+	
+										subSequence |= (num & 0x3); // puts last two bits into the long
+										subSequence = (subSequence << 2); //shifts over for the next bit to be added									letters++;
+										letters++;
+										if(letters == sequenceSize) { //if we have reached the selected size
+											// this will be where you add the long to the binary tree
+											//you will have to shift right by one bit no mater what because 
+											// we have been shifting by two every time\
+											System.out.println(""); //TODO: remove print line
+											subSequence = subSequence >> 1;
+											//TODO: replace print line with adding to bTREE
+											System.out.println(Long.toBinaryString(subSequence)); //This is when we add a long to the tree
+											letters = 0;
+										}
+									}else if(letter == ' ') { //when the char is in the space
+										additions++; //add one
+										letter = currentLine.charAt(i+j+additions); //remakes the letter to the very next one
+										num = letterCheck(letter);
+										System.out.print(letter); //TODO: remove print line
+	
+										// add char to long and shift
+										subSequence |= (num & 0x3); // puts last two bits into the long
+										subSequence = (subSequence << 2); //shifts over for the next bit to be added
+										letters++;
+										if(letters == sequenceSize) {  //if we have reached the selected size
+											System.out.println(""); //TODO: remove print line
+											subSequence = subSequence >> 1;
+											//TODO: replace print line with adding to btree
+											System.out.println(Long.toBinaryString(subSequence)); //This is when we add a long to the tree
+											letters = 0;
+										}
+									}else if(letter == 'n') { 
+										if(letters != 0) { // if we have letters in our sequence else do nothing
+											// we want to do nothing so we
+											//can remake a new long with a vaild length
+											
+											//TODO: remove printline.  If statement should only reset letters to 0
+											System.out.println("");
+											letters = 0; 
+										}
+									}
+								}else { //go into next line for last few spots of the sequence
+									if(!letterHadBefore) { //this checks if we have already been inside the next line for the same sequence
+										x = 0;
+									}
+									if(!nextLine.equals("//")) { //this checks if our nextline does not equal the end of our parsing
+										letter = nextLine.charAt(++x); //if we already been through next line once it will take the char after the previous one
+										while(letter != 'a' && letter != 't' && letter != 'c' && letter != 'g') { //finds the first letter
+											x++;
+											letter = nextLine.charAt(x);
+										}
+										letterHadBefore = true; // sets the we have now been through the next Line
+										num = letterCheck(letter);
+										// add char to long and shift
+										System.out.print(letter); //TODO: remove print line
+	
+										subSequence |= (num & 0x3); // puts last two bits into the long
+										subSequence = (subSequence << 2); //shifts over for the next bit to be added
+										letters++;
+										if(letters == sequenceSize) { //if we have reached the selected size
+											subSequence = subSequence >> 1;
+										    System.out.println(""); //TODO: remove print line
+										  //TODO: replace print line with adding long to binary tree
+											System.out.println(Long.toBinaryString(subSequence)); //This is when we add a long to the tree
+											letters = 0;
+											letterHadBefore = false;
+										}
+									}else {
+										exit = true; //for the very last case, if we didn't do this the letter would remain the same and would add on
+									}
+								}
+							}
+						}
+					}	
+				}
+				while(!nextLine.equals("ORIGIN") && !endOfFile) { //searches for next origin if there is one	
+					if(scan.hasNextLine()) {
+						nextLine = scan.nextLine();
+					} else {
+						endOfFile = true;
+					}
+				}
+			}
+			/*
 			if(endOfFile) {
 				System.out.println("\nyou reached the end of the file");
+			}else { // there is another sequence to scan
+				//reinitilize some letters and exit variables
+				letters = 0;
+				exit = false;
+				
 			}
+			*/
 			scan.close();
 			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		
 	}
+	
+	private static byte letterCheck(char letter) {
+		switch(letter) {
+		case 'a':
+			return 0;
+		case 'c':
+			return 1;
+		case 't':
+			return 2;
+		case 'g':
+			return 3;
+		default:
+			return -1; //if its not a valid letter we want
+		}			
+	}
+	
 
 }
