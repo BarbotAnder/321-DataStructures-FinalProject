@@ -1,32 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*this is a mess lmao
 
 // Our professor wanted each node to be stored on a full disk block right? my current implementation should do that (NODE_SIZE)

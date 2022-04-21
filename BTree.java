@@ -6,13 +6,13 @@ import java.util.Stack;
 
 public class BTree {
 
-  private int withWithoutCache;
+  private int wWOCache; //with or without cache
 	private int degree;
 	private String BtreeFileName;
-	private int lengthOfSequence;
+	private int seqLen; //length of sequence
 	private int cacheSize;
 	private Cache cache;
-	private int CurrentOffSet; //newest node name
+	private int CurrOffSet; //newest node name
 	private int offSetIncrement; //off set changes to each node
 	private File outputFile; //BTree file
 	private RandomAccessFile RAF; //read and write BTrees to file
@@ -50,10 +50,10 @@ public class BTree {
 //     }
 //   }
 
-  public BTree(int degree, int cacheSize, int lengthOfSequence, String RAF){
+  public BTree(int degree, int cacheSize, int seqLen, String RAF){
     this.degree = degree;
     this.BtreeFileName = RAF;
-    this.lengthOfSequence = lengthOfSequence;
+    this.seqLen = seqLen;
     this.cacheSize = cacheSize;
     nextAddress = 0;
     addressSize = 1000; //change in terms of degree (max size of node)
@@ -103,6 +103,17 @@ public class BTree {
 		}		
 	}
 
+  private BTreeNode DISKREAD(long fileIndex) {
+    return null;
+  }
+
+  private void BTreeSplitChild(BTreeNode currentNode, int i) {
+  }
+
+  private BTreeNode getNode(long child) {
+    return null;
+  }
+
   private void DISKWRITE(BTreeNode currentNode) {
   }
 
@@ -129,6 +140,10 @@ public class BTree {
 			BTreeInsertNonFull(r, newKey);
 		}
 	}
+
+  private long newNodeOffSet() {
+    return 0;
+  }
 
   public String Find(int k) {
   
