@@ -5,12 +5,23 @@ import java.util.Stack;
 
 public class BTree {
 
+  private int withWithoutCache;
+	private int degree;
+	private String BtreeFileName;
+	private int lengthOfSequence;
+	private int cacheSize;
+	private Cache cache;
+	private int CurrentOffSet; //newest node name
+	private int offSetIncrement; //off set changes to each node
+	private File outputFile; //BTree file
+	private RandomAccessFile RAF; //read and write BTrees to file
+	private int TreeHeight = 0;
   private int T;
   private Node root;
-  private RandomAccessFile RAF;
   private long nextAdd;
   private int byteLength;
-//add 1 to array to start at one. This allows us to copy the book's code exactly
+
+// add 1 to array to start at one. This allows us to copy the book's code exactly
   public class Node {
     int n;
     TreeObject key[]; //= new int[2t - 1]
@@ -25,6 +36,11 @@ public class BTree {
         key = new TreeObject[2 * t - 1];
         child = new long[2 * t];
     }
+
+    //create root node for Btree
+		root = new BTreeNode(0);
+		root.setLeaf(true);
+		cache.addObjectFirst(root);
 
     public Node(long address) {
 
@@ -71,18 +87,99 @@ public class BTree {
     */
   }
 
+  private void BTreeInsertNonFull(BTreeNode currentNode, TreeObject newKey){
+		int i = currentNode.getNumKeys();
+
+		if(currentNode.getLeafStatus()){
+			while (i >= 1 && newKey.getKeyValue() < currentNode.getKey(i-1).getKeyValue()){
+				i --;		
+			}
+			if(currentNode.getNumKeys() != 0 && i != 0){
+				if(newKey.getKeyValue() == currentNode.getKey(i-1).getKeyValue()){
+					currentNode.getKey(i-1).incrementFrequency();		
+				}else{
+					currentNode.insertKey(newKey, i);			
+				}
+			}else{
+				currentNode.insertKey(newKey, i);
+			}
+			DISKWRITE (currentNode);
+		}
+		else {	
+			while(i >= 1 && newKey.getKeyValue() < currentNode.getKey(i-1).getKeyValue()){
+				i --;
+			}
+			if( i!=0 && newKey.getKeyValue() == currentNode.getKey(i-1).getKeyValue()){
+				currentNode.getKey(i-1).incrementFrequency();
+				DISKWRITE(currentNode);
+			} else{
+				BTreeNode child = getNode(currentNode.getChild(i));
+				if(child.getNumKeys() >= 2*degree-1){				
+					BTreeSplitChild(currentNode, i);		
+					child = DISKREAD(child.getFileIndex());			
+					if(newKey.getKeyValue() > currentNode.getKey(i).getKeyValue()){
+						i++;
+					}
+					BTreeInsertNonFull(getNode(currentNode.getChild(i)), newKey);
+				}else{
+				BTreeInsertNonFull(child, newKey);
+				}
+			}
+		}		
+	}
+
+  public void BtreeInsert(TreeObject newKey){		
+		BTreeNode r = root;
+		// check if the root node is full, if full split root and insert into new root
+		if (r.getNumKeys() >= 2*degree -1){
+			//create new root
+			BTreeNode s = new BTreeNode(newNodeOffSet());	
+			root = s;
+			s.insertChild(r.getFileIndex(),0); //old root now child
+			r.setParent(s.getFileIndex()); //new root now parent			
+			cache.addObjectFirst(s);
+			cache.addObjectFirst(r);
+			DISKWRITE (r);
+			BTreeSplitChild(s, 0);
+			r = DISKREAD(r.getFileIndex());
+			BTreeInsertNonFull(s, newKey);
+			cache.addObjectFirst(s);
+			cache.addObjectFirst(r);
+			TreeHeight ++;
+		}
+		else{
+			BTreeInsertNonFull(r, newKey);
+		}
+	}
+
   /*
-  B-TREE-INSERT(T, k)
-    1 r = T.root
-    2 if r.n == 2t - 1
-    3   s = ALLOCATE-NODE()
-    4   T.root = s
-    5   s.leaf = FALSE
-    6   s.n = 0
-    7   s.c1 = r
-    8   B-TREE-SPLIT-CHILD(s, 1, r) //current node, child, node to be split
-    9   B-TREE-INSERT-NONFULL(s, k)
-    10 else B-TREE-INSERT-NONFULL(r, k)
+  //find a node in the B-Tree
+
+	public int BTreeSearch(long keyValue) {
+		int found = search(root, keyValue);
+		return found;
+	}
+  
+	//Find a node in the B-Tree, backend method for BTreeSearch
+	
+	private int search(BTreeNode currentNode, long keyValue) {
+		int i = currentNode.getNumKeys()-1;
+		
+		while (i >= 0 && keyValue < currentNode.getKey(i).getKeyValue()){
+
+			i --;
+		}	
+		
+		if(i >= 0 && keyValue == currentNode.getKey(i).getKeyValue()){
+			return currentNode.getKey(i).getFrequency();
+		}else{	
+			if(!currentNode.getLeafStatus()){
+				return search(getNode(currentNode.getChild(i+1)), keyValue);
+			}else{
+				return 0;
+			}
+		}
+	}
   */
 
   public String Find(int k) {
@@ -117,7 +214,7 @@ public class BTree {
     root.leaf = true;
   }
 
-  //Search the key
+  //search the key
   public Node Search(Node x, int key) {
     int i = 0;
     if (x == null)
@@ -137,7 +234,7 @@ public class BTree {
     }
   }
 
-  //Remove function
+  // remove function
   public void Remove(Node x, int key) {
     int pos = x.Find(key);
     if (pos != -1) {
