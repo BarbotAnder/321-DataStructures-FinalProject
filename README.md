@@ -8,8 +8,6 @@ Last Name       | First Name      | GitHub User Name
 Brusse          | Gay             | GBrusse
 Barbot          | Ander           | BarbotAnder
 Tyler           | Bowes           | Tyler-Bowes
-TBD             | TBD             | TBD
-TBD             | TBD             | TBD
 
 # Cache Performance Results
 TBD
