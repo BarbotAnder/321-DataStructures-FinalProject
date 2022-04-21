@@ -5,9 +5,9 @@ BTree Final Project for Computer Science 321 - Data Structures
 
 Last Name       | First Name      | GitHub User Name
 --------------- | --------------- | --------------------
-TBD             | TBD             | TBD
+Brusse          | Gay             | GBrusse
 Barbot          | Ander           | BarbotAnder
-TBD             | TBD             | TBD
+Tyler           | Bowes           | Tyler-Bowes
 TBD             | TBD             | TBD
 TBD             | TBD             | TBD
 
