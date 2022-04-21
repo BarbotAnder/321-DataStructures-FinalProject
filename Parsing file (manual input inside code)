@@ -9,13 +9,20 @@ public class readfileTestClass {
 
 	
 	public static void main(String[] args) {
-		readFile("testing.txt", 5);
+		
+		File file = new File("testing.txt");
+		if(file.exists() && file.isFile()) {
+			readFile(file, 5); //make btree a parameter
+		} else {
+			System.out.println("UH OH!");
+		}
+		
 		
 		//System.out.println(letterCheck('a'));
 		
 	}
 	
-	private static void readFile(String filename, int degree) {
+	private static void readFile(File file, int degree) {
 		int letters; //used for keeping track of size of subsequence
 		boolean exit;
 		boolean endOfFile = false; // makes sure if we are at the end of the file
@@ -23,7 +30,7 @@ public class readfileTestClass {
 		char letter; //keeps track of the current data
 		boolean letterHadBefore = false;
 		int sequenceSize = degree;  //where we implement the parameters
-		File file = new File(filename);
+//		File file = new File(filename);
 		try {
 			
 			Scanner scan = new Scanner(file);
@@ -65,7 +72,7 @@ public class readfileTestClass {
 							letters++;
 							int additions = 0; // additions reset to 0 for every new i index (represents everytime we hit a ' '
 							for(int j = 1; j<sequenceSize; j++) {
-								if(currentLine.length()-1 >= (i+j)) { // currentLine >= the char index remain in currentLine else go nextLine
+								if(currentLine.length()-1 >= (i+j+additions)) { // currentLine >= the char index remain in currentLine else go nextLine
 									letter = currentLine.charAt(i+j+additions); // additions is if we have passed over any spaces
 									num = letterCheck(letter);
 									if(num >= 0) {
@@ -108,7 +115,8 @@ public class readfileTestClass {
 											
 											//TODO: remove printline.  If statement should only reset letters to 0
 											System.out.println("");
-											letters = 0; 
+											letters = 0;
+											j = sequenceSize; // resets to start a new subsequence
 										}
 									}
 								}else { //go into next line for last few spots of the sequence
@@ -184,6 +192,4 @@ public class readfileTestClass {
 			return -1; //if its not a valid letter we want
 		}			
 	}
-	
-
 }
