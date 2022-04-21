@@ -177,9 +177,9 @@ public class readfileTestClass {
 		case 'c':
 			return 1;
 		case 't':
-			return 2;
-		case 'g':
 			return 3;
+		case 'g':
+			return 2;
 		default:
 			return -1; //if its not a valid letter we want
 		}			
