@@ -66,20 +66,19 @@ public class GeneBankCreateBTree {
 					//throw error maybe?
 					throw new Exception("ERROR: Invalid sequenceLenth size");//throw an error to stop program
 				}
-			}
 			
-			//check for the last 
-			if(argsLength == 6) { // has 6 arguments (which is now optional) so make sure it is valid
-				if(args[5].equals("1")) { //creates a dump file
-					
-				}else if(args[5].equals("0")) { //no dump file just print in console
-					
-				}else {
-					throw new Exception("ERROR: Invalid debug level"); //throw an error to stop program
-					//error not valid debug level
+				//check for the last argument
+				if(argsLength == 6) { // has 6 arguments (which is now optional) so make sure it is valid
+					if(args[5].equals("1")) { //creates a dump file
+						
+					}else if(args[5].equals("0")) { //no dump file just print in console
+						
+					}else {
+						throw new Exception("ERROR: Invalid debug level"); //throw an error to stop program
+						//error not valid debug level
+					}
 				}
-			
-			} else {
+			}else {
 				throw new Exception("ERROR: Invalid usage"); //throw an error to stop program 
 			}
 		}catch(FileNotFoundException e){
