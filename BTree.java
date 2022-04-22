@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -5,13 +6,13 @@ import java.util.Stack;
 
 public class BTree {
 
-  private int withWithoutCache;
+  private int wWOCache; //with or without cache
 	private int degree;
 	private String BtreeFileName;
-	private int lengthOfSequence;
+	private int seqLen; //length of sequence
 	private int cacheSize;
 	private Cache cache;
-	private int CurrentOffSet; //newest node name
+	private int CurrOffSet; //newest node name
 	private int offSetIncrement; //off set changes to each node
 	private File outputFile; //BTree file
 	private RandomAccessFile RAF; //read and write BTrees to file
@@ -20,71 +21,45 @@ public class BTree {
   private Node root;
   private long nextAdd;
   private int byteLength;
+  private long nextAddress;
+  private int addressSize;
 
-// add 1 to array to start at one. This allows us to copy the book's code exactly
-  public class Node {
-    int n;
-    TreeObject key[]; //= new int[2t - 1]
-    long child[]; // = new Node[2t]
-    long thisAddress;
-    long parentAddress;
-    int metaLength = 0;
+// // add 1 to array to start at one. This allows us to copy the book's code exactly
+//   public class Node {
+//     int n;
+//     TreeObject key[]; //= new int[2t - 1]
+//     long child[]; // = new Node[2t]
+//     long thisAddress;
+//     long parentAddress;
+//     int metaLength = 0;
 
-    boolean leaf = true;
+//     boolean leaf = true;
 
-    public Node(int t, long parentAddress, long thisAddress) {
-        key = new TreeObject[2 * t - 1];
-        child = new long[2 * t];
+//     public Node(int t, long parentAddress, long thisAddress) {
+//         key = new TreeObject[2 * t - 1];
+//         child = new long[2 * t];
+//     }
+
+//     //create root node for Btree
+// 		// root = new BTreeNode(0);
+// 		// root.setLeaf(true);
+// 		// cache.addObjectFirst(root);
+
+//     public Node(long address) {
+
+//     }
+//   }
+
+  public BTree(int degree, int cacheSize, int seqLen, String RAF){
+    this.degree = degree;
+    this.BtreeFileName = RAF;
+    this.seqLen = seqLen;
+    this.cacheSize = cacheSize;
+    nextAddress = 0;
+    addressSize = 1000; //change in terms of degree (max size of node)
+    if (cacheSize > 0) {
+      cache = new Cache(cacheSize);
     }
-
-    //create root node for Btree
-		root = new BTreeNode(0);
-		root.setLeaf(true);
-		cache.addObjectFirst(root);
-
-    public Node(long address) {
-
-    }
-
-    /*
-     BTree_Insert_nonfull(x, k) **PseudoCode**
-    1 i = x.n
-    2 if (x.leaf) {
-        while(i >= 1 && k < x.keyi) {
-          x.key(i+1) = keyj
-          i++
-        }
-        x.key(i+1) = k
-        x.n++
-        DISK_WRITE(x)
-    } else {
-        while(i >= 1 && k < x.keyi) {
-          i--
-        }
-        i++
-        DISK_READ(x, c1)
-    }
-    if (x.ci.n = 2t-1) {
-      BTree_Split.child(x, i, x.ci)
-      if (k > x.keyi) {
-        i++
-      }
-      BTree_Insert_nonfull(x.ci, k)
-    } else BTree_Insert_nonfull(x.ci, k)
-
-    BTree_Search(r, k)
-    if(r == null) {
-      return r;
-    }
-    if (k = r.key) {
-      return r;
-    }
-    if (k < r.key) {
-      return BSTSearch(r.left, k);
-    } else {
-      return BSTSearch(r.right, k);
-    }
-    */
   }
 
   private void BTreeInsertNonFull(BTreeNode currentNode, TreeObject newKey){
@@ -128,6 +103,20 @@ public class BTree {
 		}		
 	}
 
+  private BTreeNode DISKREAD(long fileIndex) {
+    return null;
+  }
+
+  private void BTreeSplitChild(BTreeNode currentNode, int i) {
+  }
+
+  private BTreeNode getNode(long child) {
+    return null;
+  }
+
+  private void DISKWRITE(BTreeNode currentNode) {
+  }
+
   public void BtreeInsert(TreeObject newKey){		
 		BTreeNode r = root;
 		// check if the root node is full, if full split root and insert into new root
@@ -152,35 +141,9 @@ public class BTree {
 		}
 	}
 
-  /*
-  //find a node in the B-Tree
-
-	public int BTreeSearch(long keyValue) {
-		int found = search(root, keyValue);
-		return found;
-	}
-  
-	//Find a node in the B-Tree, backend method for BTreeSearch
-	
-	private int search(BTreeNode currentNode, long keyValue) {
-		int i = currentNode.getNumKeys()-1;
-		
-		while (i >= 0 && keyValue < currentNode.getKey(i).getKeyValue()){
-
-			i --;
-		}	
-		
-		if(i >= 0 && keyValue == currentNode.getKey(i).getKeyValue()){
-			return currentNode.getKey(i).getFrequency();
-		}else{	
-			if(!currentNode.getLeafStatus()){
-				return search(getNode(currentNode.getChild(i+1)), keyValue);
-			}else{
-				return 0;
-			}
-		}
-	}
-  */
+  private long newNodeOffSet() {
+    return 0;
+  }
 
   public String Find(int k) {
   

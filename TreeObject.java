@@ -17,4 +17,9 @@ public class TreeObject {
         //numChar: the number of chars given in a DNA sequence.
         return null;
     }
+    public int getKeyValue() {
+        return 0;
+    }
+    public void incrementFrequency() {
+    }
 }
