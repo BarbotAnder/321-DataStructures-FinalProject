@@ -9,10 +9,10 @@ public class readfileTestClass {
 
 	
 	public static void main(String[] args) {
-		
+		BTree btree = new BTree(4, 3, 2, "test");
 		File file = new File("testing.txt");
 		if(file.exists() && file.isFile()) {
-			readFile(file, 5); //make btree a parameter
+			readFile(file, 2, btree); //make btree a parameter
 		} else {
 			System.out.println("UH OH!");
 		}
@@ -22,14 +22,15 @@ public class readfileTestClass {
 		
 	}
 	
-	private static void readFile(File file, int degree) {
+	private static void readFile(File file, int length, BTree btree) {
 		int letters; //used for keeping track of size of subsequence
 		boolean exit;
 		boolean endOfFile = false; // makes sure if we are at the end of the file
 		int x = 0; //used for next line tracking
 		char letter; //keeps track of the current data
 		boolean letterHadBefore = false;
-		int sequenceSize = degree;  //where we implement the parameters
+		int sequenceSize = length;  
+		TreeObject treeObj;
 //		File file = new File(filename);
 		try {
 			
@@ -89,6 +90,9 @@ public class readfileTestClass {
 											subSequence = subSequence >> 1;
 											//TODO: replace print line with adding to bTREE
 											System.out.println(Long.toBinaryString(subSequence)); //This is when we add a long to the tree
+											treeObj = new TreeObject(subSequence); //generates a new obj with the complete subsequence
+											btree.BtreeInsert(treeObj); //insert into btree
+
 											letters = 0;
 										}
 									}else if(letter == ' ') { //when the char is in the space
@@ -106,6 +110,9 @@ public class readfileTestClass {
 											subSequence = subSequence >> 1;
 											//TODO: replace print line with adding to btree
 											System.out.println(Long.toBinaryString(subSequence)); //This is when we add a long to the tree
+											treeObj = new TreeObject(subSequence); //generates a new obj with the complete subsequence
+											btree.BtreeInsert(treeObj); //insert into btree
+											
 											letters = 0;
 										}
 									}else if(letter == 'n') { 
@@ -142,6 +149,9 @@ public class readfileTestClass {
 										    System.out.println(""); //TODO: remove print line
 										  //TODO: replace print line with adding long to binary tree
 											System.out.println(Long.toBinaryString(subSequence)); //This is when we add a long to the tree
+											treeObj = new TreeObject(subSequence); //generates a new obj with the complete subsequence
+											btree.BtreeInsert(treeObj); //insert into btree
+
 											letters = 0;
 											letterHadBefore = false;
 										}
@@ -192,4 +202,6 @@ public class readfileTestClass {
 			return -1; //if its not a valid letter we want
 		}			
 	}
+	
+
 }
