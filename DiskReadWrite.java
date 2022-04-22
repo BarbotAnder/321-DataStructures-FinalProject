@@ -8,31 +8,34 @@ import java.nio.channels.FileChannel;
  */
 
 public class DiskReadWrite {
-    private int METADATA_SIZE = 8;
-    private long nextDiskAddress = METADATA_SIZE;
+    private final int METADATA_SIZE = 8;      //2 ints
     private FileChannel file;
     private ByteBuffer buffer;
     private int nodeSize;
 
-    private long rootAddress = METADATA_SIZE; // offset to the root node
-    //private Node root; 
+    //metadata
+    private int degree;
+    private int seqLen;
+
+
 
     public DiskReadWrite(File fileName) throws IOException {    // constructor, use this DiskReadWriter to store/read nodes using functions
-        nodeSize = 4096;
-        buffer = ByteBuffer.allocateDirect(nodeSize);
-
         try {
             if (!fileName.exists()) {   //create file and write meta data
                 fileName.createNewFile();
                 RandomAccessFile dataFile = new RandomAccessFile(fileName, "rw");
                 file = dataFile.getChannel();
-                writeMetaData();    //TODO
-            } else { //
+                writeMetaData();
+                readMetaData();
+            } else {                    //read metadata
                 RandomAccessFile dataFile = new RandomAccessFile(fileName, "rw");
                 file = dataFile.getChannel();
-                //readMetaData();
-                //root = diskRead(rootAddress);
+                readMetaData();
             } 
+
+            nodeSize = 13 + 12*degree; //bool, int, long, 12/treeObj, 8/childPointer
+            buffer = ByteBuffer.allocateDirect(nodeSize);
+    
         } catch (FileNotFoundException e) {
             System.err.println(e);
         }
@@ -121,6 +124,15 @@ public class DiskReadWrite {
         file.read(tmpbuffer);
         tmpbuffer.flip();
 
-        // rootAddress = tmpbuffer.getLong();    //TODO: add a million and a half metadata pieces. (simplifying all metadata into one object would make this easy to return.)
+        // rootAddress = tmpbuffer.getLong();    //TODO: add a million and a half metadata pieces. (metadata gets stored in here.)
+    }
+    
+    //planned completion 4/24
+    public int Search(long key, fileChannel file){
+        file.position(0);
+
+        
+        
+
     }
 }

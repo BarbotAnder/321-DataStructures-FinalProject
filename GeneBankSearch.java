@@ -5,3 +5,12 @@
  * 
  * all strings in queryFile need to match seqLength of bTreeFile
  */
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+
+public class GeneBankSearch{
+
+
+}
