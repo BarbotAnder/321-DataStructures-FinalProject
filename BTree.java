@@ -71,7 +71,8 @@ public class BTree {
 			}
 			if(currentNode.getNumKeys() != 0 && i != 0){
 				if(newKey.getKeyValue() == currentNode.getKey(i-1).getKeyValue()){
-					currentNode.getKey(i-1).incrementFrequency();		
+					currentNode.getKey(i-1).incrementFrequency();
+					//return or just break out of function because its a duplicate and we dont want to add just incrementfrequency (coming from tutor)
 				}else{
 					currentNode.insertKey(newKey, i);			
 				}
