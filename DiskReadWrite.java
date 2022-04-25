@@ -5,10 +5,17 @@ import java.nio.channels.FileChannel;
 /*
  * This class will convert all node Data, except fileIndex, to binary data and store it in the correct file, 
  * or will convert the binary data back into the correct node
+ * 
+ * 
+ * 
+ * currently will have empty space at the back, could be implemented to leave space where it originates, i do not think it matters, it will be discussed w group
  */
 
 public class DiskReadWrite {
-    private final int METADATA_SIZE = 8;      //2 ints
+    private final int METADATA_SIZE = 8;            //2 ints (degree, seqLen)
+    private final int NODE_METADATA_SIZE = 13;      //bool, long, int (leaf, numKeys, parentPointer)
+    private final int KEY_SIZE = 12;                //long, int (sequence, frequency)
+    private final int CHILD_POINTER_SIZE = 8;       //long (childPointer)
     private FileChannel file;
     private ByteBuffer buffer;
     private int nodeSize;
@@ -19,9 +26,9 @@ public class DiskReadWrite {
 
 
 
-    public DiskReadWrite(File fileName) throws IOException {    // constructor, use this DiskReadWriter to store/read nodes using functions
+    public DiskReadWrite(File fileName) throws IOException {    //constructor, use this DiskReadWriter to store/read nodes using functions
         try {
-            if (!fileName.exists()) {   //create file and write meta data
+            if (!fileName.exists()) {   //create file, write and read metadata
                 fileName.createNewFile();
                 RandomAccessFile dataFile = new RandomAccessFile(fileName, "rw");
                 file = dataFile.getChannel();
@@ -33,7 +40,8 @@ public class DiskReadWrite {
                 readMetaData();
             } 
 
-            nodeSize = 13 + 12*degree; //bool, int, long, 12/treeObj, 8/childPointer
+            //initialize vars
+            nodeSize = NODE_METADATA_SIZE + KEY_SIZE * (2 * degree - 1) + CHILD_POINTER_SIZE * (2 * degree); //(2t-1)treeObj, (2t)childPointer
             buffer = ByteBuffer.allocateDirect(nodeSize);
     
         } catch (FileNotFoundException e) {
@@ -42,7 +50,7 @@ public class DiskReadWrite {
     }
 
     public void diskWrite(BTreeNode node) throws IOException {
-        file.position((node.getFileIndex()*nodeSize) + METADATA_SIZE);    //position of node in bytes
+        file.position((node.getFileIndex()*nodeSize) + METADATA_SIZE);    //position of the start of the node (in bytes)
         buffer.clear();
 
         //put all node data into binary stream
@@ -72,7 +80,7 @@ public class DiskReadWrite {
 
 
     public BTreeNode diskRead(long fileIndex) throws IOException {
-        file.position((fileIndex*nodeSize) + METADATA_SIZE);      //position of node in bytes
+        file.position((fileIndex*nodeSize) + METADATA_SIZE);      //position of the start of the node (in bytes)
         buffer.clear();
 
         //reads a full buffer (which is nodeSize)    therefore reads a full node from file
@@ -101,38 +109,78 @@ public class DiskReadWrite {
         return node;
     }
 
-    public void writeMetaData() throws IOException {
+    public void writeMetaData(BTree bTree) throws IOException {
         file.position(0);
         
         //buffer of proper size ensures no wasted space
-        ByteBuffer tmpbuffer = ByteBuffer.allocateDirect(METADATA_SIZE);
-        tmpbuffer.clear();
+        ByteBuffer tmpBuffer = ByteBuffer.allocateDirect(METADATA_SIZE);
+        tmpBuffer.clear();
 
-        //tmpbuffer.put();    //TODO: add a million and a half things
+        tmpBuffer.putInt(bTree.getDegree());    //TODO: needs to be implemented in BTree
+        tmpBuffer.putInt(bTree.getseqLen());    //TODO: needs to be implemented in BTree
 
         //writes metadata to file
-        tmpbuffer.flip();
-        file.write(tmpbuffer);
+        tmpBuffer.flip();
+        file.write(tmpBuffer);
     }
 
     public void readMetaData() throws IOException {
         file.position(0);
 
         //buffer of proper size ensures only taking valid metadata
-        ByteBuffer tmpbuffer = ByteBuffer.allocateDirect(METADATA_SIZE);
-        tmpbuffer.clear();
-        file.read(tmpbuffer);
-        tmpbuffer.flip();
+        ByteBuffer tmpBuffer = ByteBuffer.allocateDirect(METADATA_SIZE);
+        tmpBuffer.clear();
 
-        // rootAddress = tmpbuffer.getLong();    //TODO: add a million and a half metadata pieces. (metadata gets stored in here.)
+        //read metadata from file
+        file.read(tmpBuffer);
+        tmpBuffer.flip();
+
+        //turn the read data into understandable data & keep a record of it
+        degree = tmpBuffer.getInt();
+        seqLen = tmpBuffer.getInt();
     }
     
-    //planned completion 4/24
-    public int Search(long key, fileChannel file){
-        file.position(0);
+    //search through file for the provided sequence
+    public int Search(long sequence){
+        long low = 0;
+        long mid = 0;
+        long high = (file.size() - METADATA_SIZE) / nodeSize; //starts as nodeCount
+        long pos;                                           //beginning of node we will be analyzing
 
-        
-        
+        long currentSeq;
+        while(low <= high){                                 //while not at the end of file
+            mid = (low + high) / 2;
+            pos = (mid * nodeSize) + METADATA_SIZE;
 
+            buffer.clear();                                 //restore buffer
+            bytesRead = file.read(buffer, pos);             //read in a full node
+            buffer.flip();
+            
+            buffer.get();           //get past leaf
+            int numKeys = buffer.getInt();
+            buffer.getLong();       //get past parentPointer
+
+            long currentLow;                                //lowest value in current node
+            long currentHigh;                               //highest value in current node
+            for(int i = 0; i < numKeys; i++){               //for all keys stored
+                currentSeq = buffer.getLong();              
+                if(i == 0){
+                    currentLow = currentSeq;
+                }else if(i == numKeys - 1){
+                    currentHigh = currentSeq;
+                }
+                if(currentSeq == sequence){                 //correct sequence found
+                    return buffer.getInt();                 //return correct frequency
+                }
+                buffer.getInt()     //get past frequency
+            }
+            if(currentHigh > sequence){
+                high = mid - 1;                             
+            }else if (currentLow < sequence){
+                low = mid + 1;
+            }
+            System.out.println(".");
+        }
+        return -1                                           //when sequence not found
     }
 }
