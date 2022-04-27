@@ -143,14 +143,14 @@ public class DiskReadWrite {
     //search through file for the provided sequence
     public int Search(long sequence){
         long low = 0;
-        long mid = 0;
+        int mid = 0;
         long high = (file.size() - METADATA_SIZE) / nodeSize; //starts as nodeCount
         long pos;                                           //beginning of node we will be analyzing
 
         long currentSeq;
         while(low <= high){                                 //while not at the end of file
             mid = (low + high) / 2;
-            pos = (mid * nodeSize) + METADATA_SIZE;
+            pos = (mid * nodeSize) + METADATA_SIZE + 1;  
 
             buffer.clear();                                 //restore buffer
             bytesRead = file.read(buffer, pos);             //read in a full node
