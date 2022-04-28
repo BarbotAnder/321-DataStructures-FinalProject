@@ -41,9 +41,16 @@ public class GeneBankCreateBTree {
 				degree = Integer.parseInt(args[1]);
 				if(degree >= 0 && degree < 4096) { 
 					if(degree == 0) {
+						//optimal degree calculations
+						//NODE_METADATA_SIZE + KEY_SIZE * (2 * degree - 1) + CHILD_POINTER_SIZE * (2 * degree) <= 4096
+						// 8 + 12(2*degree + 1) + 8(2*degree - 1) <= 4096
+						// 8 + 24degree + 12 + 16degree - 8 <= 4096
+						// 12 + 40degree <= 4096
+						// 40degree <= 4084
+						// degree = 102
 						
-						// code for chooseing optimum degree
-					
+						degree = 102;
+											
 					}
 					//System.out.println(degree);	
 					
