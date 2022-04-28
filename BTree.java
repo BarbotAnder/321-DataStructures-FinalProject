@@ -376,6 +376,13 @@ public class BTree {
     }
   }
 
+  public int getDegree(){
+    return degree;
+  }
+
+  public int getSeqLen(){
+    return seqLen;
+  }
     /*
     B-TREE-CREATE(T)
     1 x = ALLOCATE-NODE()

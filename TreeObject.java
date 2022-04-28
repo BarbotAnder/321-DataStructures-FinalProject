@@ -4,7 +4,10 @@ public class TreeObject {
 
     public TreeObject(long DNA) {
         this.DNA = DNA;
-        
+    }
+    public TreeObject(long DNA, int frequency) {
+        this.DNA = DNA;
+        this.frequency = frequency;
     }
     public long getDNA() {
         return DNA;
@@ -21,5 +24,9 @@ public class TreeObject {
         return 0;
     }
     public void incrementFrequency() {
+
+    }
+    public int getFrequency() {
+        return frequency;
     }
 }
