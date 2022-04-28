@@ -16,7 +16,6 @@ public class DiskReadWrite {
     private final int NODE_METADATA_SIZE = 13;      //bool, long, int (leaf, numKeys, parentPointer)
     private final int KEY_SIZE = 12;                //long, int (sequence, frequency)
     private final int CHILD_POINTER_SIZE = 8;       //long (childPointer)
-    RandomAccessFile dataFile;
     private FileChannel file;
     private ByteBuffer buffer;
     private int nodeSize;
@@ -31,12 +30,12 @@ public class DiskReadWrite {
         try {
             if (!fileName.exists()) {   //create file, write and read metadata
                 fileName.createNewFile();
-                dataFile = new RandomAccessFile(fileName, "rw");
+                RandomAccessFile dataFile = new RandomAccessFile(fileName, "rw");
                 file = dataFile.getChannel();
                 writeMetaData();
                 readMetaData();
             } else {                    //read metadata
-                dataFile = new RandomAccessFile(fileName, "rw");
+                RandomAccessFile dataFile = new RandomAccessFile(fileName, "rw");
                 file = dataFile.getChannel();
                 readMetaData();
             } 
@@ -55,18 +54,18 @@ public class DiskReadWrite {
         buffer.clear();
 
         //put all node data into binary stream
-        if(node.getLeafStatus()){
+        if(node.getLeafStatus){
             buffer.put((byte) 1);
         }else{
             buffer.put((byte) 0);
         }
-        int n = node.getNumKeys();
+        int n = node.getNumKeys;
         buffer.putInt(n);
-        buffer.putLong(node.getParentNode());
+        buffer.putLong(node.getParentNode);
         for(int i = 0; i < n; i++){
             TreeObject current = node.getKey(i);
             buffer.putLong(current.getDNA());
-            buffer.putInt(current.getFrequency());
+            buffer.putInt(current.getFrequency());         //TODO: needs to be implemented in TreeObject
         }
         if(!node.getLeafStatus()){
             for(int i = 0; i < n + 1; i++){
@@ -91,8 +90,7 @@ public class DiskReadWrite {
         //turn the data gathered in the binary stream into a BTreeNode
         BTreeNode node = new BTreeNode();  //node we will return
         node.setFileIndex(fileIndex);
-        byte leaf = buffer.get();
-        if(leaf == 0){
+        if(buffer.get() = 0){
             node.setLeaf(false); 
         }else{
             node.setLeaf(true); 
@@ -100,26 +98,26 @@ public class DiskReadWrite {
 	    int numKeys = buffer.getInt();
 	    node.setParent(buffer.getLong());
         for(int i = 0; i < numKeys; i++){   //finds all keys stored
-            TreeObject current = new TreeObject(buffer.getLong(), buffer.getInt());
+            TreeObject current = new TreeObject(buffer.getLong(), buffer.getInt());      //TODO: needs to be added in treeObject class
             node.insertKey(current, i);
         }
-        if(leaf == 0){
+        if(!leaf){
             for(int i = 0; i < numKeys + 1; i++){
-                node.insertChild(buffer.getLong(), i);
+                node.insertChild(buffer.getLong());
             }
         }
         return node;
     }
 
-    public void writeMetaData() throws IOException {
+    public void writeMetaData(BTree bTree) throws IOException {
         file.position(0);
         
         //buffer of proper size ensures no wasted space
         ByteBuffer tmpBuffer = ByteBuffer.allocateDirect(METADATA_SIZE);
         tmpBuffer.clear();
 
-        tmpBuffer.putInt(degree);
-        tmpBuffer.putInt(seqLen);
+        tmpBuffer.putInt(bTree.getDegree());    //TODO: needs to be implemented in BTree
+        tmpBuffer.putInt(bTree.getseqLen());    //TODO: needs to be implemented in BTree
 
         //writes metadata to file
         tmpBuffer.flip();
@@ -143,7 +141,7 @@ public class DiskReadWrite {
     }
     
     //search through file for the provided sequence
-    public int Search(long sequence) throws IOException{
+    public int Search(long sequence){
         long low = 0;
         int mid = 0;
         long high = (file.size() - METADATA_SIZE) / nodeSize; //starts as nodeCount
@@ -151,19 +149,19 @@ public class DiskReadWrite {
 
         long currentSeq;
         while(low <= high){                                 //while not at the end of file
-            mid = (int) (low + high) / 2;
+            mid = (low + high) / 2;
             pos = (mid * nodeSize) + METADATA_SIZE + 1;  
 
             buffer.clear();                                 //restore buffer
-            file.read(buffer, pos);             //read in a full node
+            bytesRead = file.read(buffer, pos);             //read in a full node
             buffer.flip();
             
             buffer.get();           //get past leaf
             int numKeys = buffer.getInt();
             buffer.getLong();       //get past parentPointer
 
-            long currentLow = 0;                                //lowest value in current node
-            long currentHigh = 0;                               //highest value in current node
+            long currentLow;                                //lowest value in current node
+            long currentHigh;                               //highest value in current node
             for(int i = 0; i < numKeys; i++){               //for all keys stored
                 currentSeq = buffer.getLong();              
                 if(i == 0){
@@ -174,7 +172,7 @@ public class DiskReadWrite {
                 if(currentSeq == sequence){                 //correct sequence found
                     return buffer.getInt();                 //return correct frequency
                 }
-                buffer.getInt();     //get past frequency
+                buffer.Int();     //get past frequency
             }
             if(currentHigh > sequence){
                 high = mid - 1;                             
@@ -183,16 +181,22 @@ public class DiskReadWrite {
             }
             System.out.println(".");
         }
-        return -1;                                          //when sequence not found
-    }
-    
-    public void setMetaData(int degree, int seqLen){
-        this.degree = degree;
-        this.seqLen = seqLen;
+        return -1;                                           //when sequence not found
     }
 
-    public void close() throws IOException{
-        file.close();
-        dataFile.close();
-    }
+
+
+
+	public int getMetaData_size() {
+		return METADATA_SIZE;
+	}
+	public int getNODE_METADATA_SIZE() {
+		return NODE_METADATA_SIZE;
+	}
+	public int getKEY_SIZE() {
+		return KEY_SIZE;
+	}
+	public int getCHILD_POINTER_SIZE() {
+		return CHILD_POINTER_SIZE;
+	}
 }
