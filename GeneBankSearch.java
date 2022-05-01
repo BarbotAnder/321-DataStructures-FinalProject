@@ -125,7 +125,7 @@ public class GeneBankSearch{
 		}catch(Exception e){
 			System.out.println(e);
 			System.out.println("USAGE: java GeneBankCreateBTree <0/1(no/with Cache)> <degree> <gbk file> <sequence length>\r\n"
-					+ "[<cache size>] [<debug level>]");;
+					+ "[<cache size>] [<debug level>]");
 		}
     }
 }
