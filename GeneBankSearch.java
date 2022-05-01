@@ -82,7 +82,7 @@ public class GeneBankSearch{
 					}
 				}
 
-
+                //TODO: Add cache implementation
                 reader = new DiskReadWrite(bTreeFile);
 				Scanner fScan = new Scanner(queryFile);
                 String dnaSequence;
@@ -91,7 +91,6 @@ public class GeneBankSearch{
 
                 while(fScan.hasNextLine()){
                     dnaSequence = fScan.nextLine();
-                    System.out.println("original sequence: " + dnaSequence);
                     frequency = 0;
                     sequence = 0;
                     
@@ -115,8 +114,8 @@ public class GeneBankSearch{
                     }
                     frequency = reader.Search(sequence);
 
-                    //sequence and frequncy are stored
-                    System.out.println("original: " + dnaSequence + "frequency: " + frequency);     //TODO: check sample query outputs
+                    //sequence and frequncy are printed
+                    System.out.println("original: " + dnaSequence + "\tfrequency: " + frequency);     //TODO: check sample query outputs
                 }
                 fScan.close();
 				
