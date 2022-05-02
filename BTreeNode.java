@@ -1,161 +1,130 @@
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
-public class BTreeNode {
 
-	private long fileIndex; //identifer for each node
-	private boolean leaf; //identifies if you can insert new key into node
-	private int numKeys;
-	private long parentNode;
-	private ArrayList<TreeObject> keys;
-	private ArrayList<Long> children;
-	
-	/**
-	 * Create a new BTree ROOT Node
-	 * @param fileIndex
-	 * @param parentNode
-	 * @param children
-	 * @param leaf
-	 * @param keys
-	 */
-	public BTreeNode() {
-		numKeys = 0;
-		fileIndex = 0;  //new file index are stored in Btree
-		parentNode = -1;
-		leaf = false;
+public class BTreeNode {
+	public long fileIndex;
+	public boolean isLeaf;
+	public long parentIndex;
+
+	public ArrayList<TreeObject> keys;
+	public ArrayList<Long> children;
+
+	private static int NODE_METADATA_SIZE = 13;      // bool, int, long (isLeaf, numKeys, parentIndex)
+    private static int KEY_SIZE = 12;                // long, int (sequence, frequency)
+    private static int CHILD_INDEX_SIZE = 8;         // long (fileIndex)
+
+	public BTreeNode(long fileIndex) {
+		this.fileIndex = fileIndex;
+		isLeaf = true;
+		parentIndex = -1;
 		keys = new ArrayList<TreeObject>();
 		children = new ArrayList<Long>();
 	}
 
-	/**
-	 * Create a new BTree NOT ROOT Node (split node)
-	 * @param fileIndex
-	 * @param parentNode
-	 * @param keys
-	 * @param children
-	 */
-	public BTreeNode(long fileOffSet) {
-		numKeys = 0;
-		fileIndex = fileOffSet;
-		parentNode = -1;
-		leaf = false;
+	// Deserialize node from byte array
+	public BTreeNode(long fileIndex, byte[] bytes, int degree) {
+		this.fileIndex = fileIndex;
 		keys = new ArrayList<TreeObject>();
-		children = new ArrayList<Long>();	
+		children = new ArrayList<Long>();
+		
+		ByteBuffer buffer = ByteBuffer.wrap(bytes);
+		isLeaf = (buffer.get() != 0);
+		int numKeys = buffer.getInt();
+		parentIndex = buffer.getLong();
+
+		for (int i = 0; i < 2 * degree - 1; i++) {
+			if (i < numKeys) {
+				long sequence = buffer.getLong();
+				int frequency = buffer.getInt();
+				keys.add(new TreeObject(sequence, frequency));
+			} else {
+				buffer.getLong();
+				buffer.getInt();
+			}
+		}
+
+		for (int i = 0; i < 2 * degree; i++) {
+			if (i < numKeys) {
+				long childIndex = buffer.getLong();
+				children.add(childIndex);
+			} else {
+				//buffer.getLong();
+				return;
+			}
+		}
 	}
 
-	//get the number of keys in the B-Tree Node.
-	public int getNumKeys() {
-		return numKeys;
+	// Return the next node that could contain the sequence
+	public long next(long sequence) {
+		for (int i = 0; i < keys.size(); i++) {
+			if (sequence < keys.get(i).sequence) {
+				return children.get(i - 1);
+			}
+		}
+		return children.get(children.size() - 1);
 	}
 
-	//insertKey into node.
-	public void insertKey(TreeObject obj, int i) {
-		keys.add(i, obj);
-		numKeys += 1;
-	}
-
-	//set Key of the node.
-	public void setKey(TreeObject obj, int i) {
-		keys.set(i,obj);
-	}
-
-	
-	/**
-	 * set number of keys in note //important for split
-	 * @param numKeys amount of keys stored in node
-	 */
-	public void setNumKeys(int numKeys) {
-		this.numKeys = numKeys;
-	}
-
-	/**
-	set the key stored in Keys array
-	@param index location of key in array
-	*/
-	public TreeObject getKey(int index ) {
-		TreeObject key = keys.get(index);
-		return key;
-	}
-
-	//get the number of children
+	// Get the number of children
 	public int getNumChildren() {
-		if(leaf){
+		if (isLeaf) {
 			return 0;
 		}
-		return getNumKeys() + 1;
+		return children.size();
 	}
 
-	//set the children in Children array in the node
-	public void setChild(long l, int index){
-		children.set(index,l);
-	}
-
-    //get the children from Children array in the node
-	public long getChild(int index){
-		return children.get(index);
-	}
-
-	//insert the children in Children array in the node
-	public void insertChild(long l, int index){
-		children.add(index,l);
-	}
-
-    	//set the parent for current node
-	public void setParent(long l) {
-		parentNode = l;
-	}
-
-	//get the parent node of the BTree
-	public long getParentNode() {
-		return parentNode;
-	}
-
-	//get the Fileindex of the node
-	public long getFileIndex() {
-		return fileIndex;
-	}
-
-	//set the Fileindex of the node
-	public void setFileIndex(long fileIndex) {
-		this.fileIndex = fileIndex;
-	}
-
-	//set the leaf status of the node
-	public void setLeaf(boolean leafStatus) {
-		leaf = leafStatus;
-	}
-
-	//get the leaf status of the node
-	public boolean getLeafStatus() {
-		return leaf;
-	}
-
-	//Convert useful information to a string for debugging
-	public String toString() {
-		int numKeys = this.getNumKeys();
-		int numChildren = this.getNumChildren();
+	// Serialize the node into a byte array
+	public byte[] serialize(int degree, int seqLen) {
+		int size = serialSize(degree);
+		ByteBuffer buffer = ByteBuffer.allocate(size);
 		
-		StringBuilder str = new StringBuilder("FileIndex: ");
-		str.append(this.getFileIndex());
-		str.append("\nNumKeys: ");
-		str.append(numKeys);
-		str.append("\nparentNode: ");
-		str.append(this.getParentNode());
-		str.append("\nleaf: ");
-		str.append(this.getLeafStatus());
-		str.append("\nKeys: ");
-		
-		//check for off by 1 error
-		for (int i = 0; i <= numKeys; i++) {
-			str.append(this.getKey(i));
-			str.append(" ");
+		if (isLeaf) {
+			buffer.put((byte) 1);
+		} else {
+			buffer.put((byte) 0);
 		}
+
+		buffer.putInt(keys.size());
+		buffer.putLong(parentIndex);
 		
-		str.append("\nChildren");
-		
-		//check for off by 1 error
-		for (int i = 0; i <= numChildren; i++) {
-			str.append(this.getChild(i));
-			str.append(" ");
-		}	
-		return str.toString();
+		for (int i = 0; i < 2 * degree - 1; i++) {
+			if (i < keys.size()) {
+				buffer.putLong(keys.get(i).sequence);
+				buffer.putInt(keys.get(i).frequency);
+			} else {
+				buffer.putLong(0);
+				buffer.putInt(0);
+			}
+		}
+
+		for (int i = 0; i < 2 * degree; i++) {
+			if (i < children.size()) {
+				buffer.putLong(children.get(i));
+			} else {
+				buffer.putLong(0);
+			}
+		}
+
+		return buffer.array();
+	}
+
+	// Calculate how many bytes are needed to serialize a node of a given degree
+	public static int serialSize(int degree) {
+		return NODE_METADATA_SIZE + KEY_SIZE * (2 * degree - 1) + CHILD_INDEX_SIZE * (2 * degree);
+	}
+
+	public void debug() {
+		System.out.println("fileIndex: " + fileIndex);
+		System.out.println("isLeaf: " + isLeaf);
+		System.out.println("parentIndex: " + parentIndex);
+		System.out.print("Keys: ");
+		for (TreeObject key : keys) {
+			System.out.print(key.sequence + ", ");
+		}
+
+		System.out.print("\nChildren: ");
+		for (Long child : children) {
+			System.out.print(child + ", ");
+		}
+		System.out.println("\n");
 	}
 }
