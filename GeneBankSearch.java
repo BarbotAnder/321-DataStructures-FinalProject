@@ -15,7 +15,7 @@ public class GeneBankSearch{
 
     public static void main(String[] args) {
 		
-		DiskReadWrite reader;
+		FileIO reader;
         File bTreeFile;
         File queryFile;
 		int cacheSize;
@@ -83,7 +83,8 @@ public class GeneBankSearch{
 				}
 
                 //TODO: Add cache implementation
-                reader = new DiskReadWrite(bTreeFile);
+
+                reader = new FileIO(args[2]);
 				Scanner fScan = new Scanner(queryFile);
                 String dnaSequence;
                 long sequence;
@@ -112,7 +113,7 @@ public class GeneBankSearch{
                             break;
                         }   
                     }
-                    frequency = reader.Search(sequence);
+                    frequency = reader.Search(sequence);        //TODO: implement here or in FileIO.java
 
                     //sequence and frequncy are printed
                     System.out.println("original: " + dnaSequence + "\tfrequency: " + frequency);     //TODO: check sample query outputs

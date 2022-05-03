@@ -54,4 +54,52 @@ public class FileIO {
         file.read(buffer);
         return new BTreeNode(fileIndex, buffer, degree);
     }
+
+    /* by Ander, not fully corrected, could be implemented in GeneBankSearch.java
+    
+    
+    public int Search(long sequence) throws IOException{
+        int low = 0;
+        int mid = 0;
+        int high = (int) (file.length() - METADATA_SIZE) / NODE_SIZE; //starts as nodeCount
+        long pos;                                           //beginning of node we will be analyzing (in bytes)
+
+        byte[] buffer = new byte[NODE_SIZE];
+        long currentSeq;
+        while(low <= high){                                 //while not at the end of file
+            mid = (int) (low + high) / 2;
+            pos = ((mid -1 ) * NODE_SIZE) + METADATA_SIZE + 1;    //keep +1? TODO: Check (determined by whether read(byte[] reads pos into byte[0], or pos+1 into byte[0])
+
+            file.seek(pos);
+            file.read(buffer);             //read in a full node
+            
+            
+            buffer.           //get past leaf
+            int numKeys = buffer.getInt();
+            buffer.getLong();       //get past parentPointer
+
+            long currentLow = 0;                                //lowest value in current node
+            long currentHigh = 0;                               //highest value in current node
+            for(int i = 0; i < numKeys; i++){               //for all keys stored
+                currentSeq = buffer.getLong();              
+                if(i == 0){
+                    currentLow = currentSeq;
+                }else if(i == numKeys - 1){
+                    currentHigh = currentSeq;
+                }
+                if(currentSeq == sequence){                 //correct sequence found
+                    return buffer.getInt();                 //return correct frequency
+                }
+                buffer.getInt();     //get past frequency
+            }
+            if(currentHigh > sequence){
+                high = mid - 1;                             
+            }else if (currentLow < sequence){
+                low = mid + 1;
+            }
+            System.out.println(".");
+        }
+        return -1;                                           //when sequence not found
+    }
+    */
 }
