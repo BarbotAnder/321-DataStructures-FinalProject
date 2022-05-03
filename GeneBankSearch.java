@@ -82,8 +82,6 @@ public class GeneBankSearch{
 					}
 				}
 
-                //TODO: Add cache implementation
-
                 reader = new FileIO(args[2]);
 				Scanner fScan = new Scanner(queryFile);
                 String dnaSequence;
@@ -113,7 +111,16 @@ public class GeneBankSearch{
                             break;
                         }   
                     }
-                    frequency = reader.Search(sequence);        //TODO: implement here or in FileIO.java
+
+                    /*Frequency = reader.Search(sequence);        
+                     *
+                     * TODO: 
+                     *  implement here or in FileIO.java
+                     *      if here, Create bTree, then iterate through each query sequence, loading all nodes in tree and checking keys -- cache will do nothing.
+                     *          else, Create Btree, then iterate through all nodes in tree, checking if any key is contained in keys[] -- again, cache does nothing
+                     *          else, change bTree or cache to not create cache w size 0, then create cache here and use that to store all query sequences, removing each sequence when found...?
+                     * 
+                     */                  
 
                     //sequence and frequncy are printed
                     System.out.println("original: " + dnaSequence + "\tfrequency: " + frequency);     //TODO: check sample query outputs
