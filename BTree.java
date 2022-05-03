@@ -157,11 +157,32 @@ public class BTree {
         }
     }
 
-    private void dump() throws IOException {
+    private void fileDump() throws IOException {  //just for debugging
         System.out.println("DUMP ----------");
         for (long i = 0; i < file.maxIndex() - 1; i++) {
             BTreeNode node = loadNode(i);
             node.debug();
+        }
+    }
+
+    public void dump() throws IOException {
+        dumpInner(0);
+    }
+
+    private void dumpInner(long fileIndex) throws IOException {
+        BTreeNode node = loadNode(fileIndex);
+
+        if (node.isLeaf) {
+            for (TreeObject obj : node.keys) {
+                // If the value isn't the sentinal value
+                if (obj.sequence != -1) {
+                    System.out.println(obj.sequence + ": " + obj.frequency);
+                }
+            }
+        } else {
+            for (Long child : node.children) {
+                dumpInner(child);
+            }
         }
     }
 
