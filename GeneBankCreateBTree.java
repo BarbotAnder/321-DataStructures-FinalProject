@@ -133,7 +133,7 @@ public class GeneBankCreateBTree {
 			String nextLine = scan.nextLine();
 			String currentLine;
 			
-			while(!nextLine.equals("ORIGIN") && !endOfFile) { //searches for the first origin line	
+			while(!nextLine.contains("ORIGIN") && !endOfFile) { //searches for the first origin line	
 				if(scan.hasNextLine()) {
 					nextLine = scan.nextLine();
 				} else {
@@ -236,7 +236,7 @@ public class GeneBankCreateBTree {
 						}
 					}	
 				}
-				while(!nextLine.equals("ORIGIN") && !endOfFile) { //searches for next origin if there is one	
+				while(!nextLine.contains("ORIGIN") && !endOfFile) { //searches for next origin if there is one	
 					if(scan.hasNextLine()) {
 						nextLine = scan.nextLine();
 					} else {
