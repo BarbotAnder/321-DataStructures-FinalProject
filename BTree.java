@@ -229,4 +229,7 @@ public class BTree {
         // Write to disk
         file.write(node);
     }
+    public int getSeqLen() {
+    	return seqLen;
+    }
 }
