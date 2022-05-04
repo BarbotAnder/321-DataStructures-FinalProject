@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.PrintStream;
 
 public class BTree {
     private final int degree;
@@ -176,7 +177,7 @@ public class BTree {
             for (TreeObject obj : node.keys) {
                 // If the value isn't the sentinal value
                 if (obj.sequence != -1) {
-                    System.out.println(obj..toString(seqLen) + ": " + obj.frequency);
+                    System.out.println(obj.toString(seqLen) + ": " + obj.frequency);
                 }
             }
         } else {
