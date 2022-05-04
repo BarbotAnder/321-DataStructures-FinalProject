@@ -186,6 +186,25 @@ public class BTree {
         }
     }
 
+    //This uses and prints to a dump file
+    public void dumpStream(long fileIndex, PrintStream stream) throws IOException {
+        BTreeNode node = loadNode(fileIndex);
+
+        if (node.isLeaf) {
+            for (TreeObject obj : node.keys) {
+                // If the value isn't the sentinal value
+                if (obj.sequence != -1) {
+                	
+                    stream.append(obj.toString(seqLen) + ": " + obj.frequency + "\n");
+                }
+            }
+        } else {
+            for (Long child : node.children) {
+                dumpStream(child, stream);
+            }
+        }
+    }
+    
     private BTreeNode loadNode(long fileIndex) throws IOException {
         if (fileIndex == 0) {
             return root;
