@@ -18,6 +18,8 @@ public class GeneBankSearch{
 		FileIO reader;
         File bTreeFile;
         File queryFile;
+        BTree btree;
+
 		int cacheSize;
         int debugLevel; //don't understand need
 		int degree; //don't understand need
@@ -33,37 +35,29 @@ public class GeneBankSearch{
 						cacheSize = Integer.parseInt(args[3]);
 						if(cacheSize <= 0) {
 							throw new Exception("ERROR: Invalid cache size value");
-						
-						}else { //cacheSize > 0
-							//TODO: make a cache with cacheSize
-						}
+						} // cache is implemented in BTree
 					}else { //args[3] == null
 						throw new Exception("ERROR: No cache size value");
 					}
-					
 				} else if(args[0].equals("0")) {
-					cacheSize = 0;                          //TODO: check that this will not create a cache when creating the btree
-					
+					cacheSize = 0;
 				} else { //args[0] is not 1 or 0
 					throw new Exception("ERROR: Invalid cache boolean");
 				}
-				
 				
                 //gets BTreeFile
                 bTreeFile = new File(args[1]);
                 if(!bTreeFile.exists()){
                     throw new Exception("ERROR: bTreeFile does not exist");
+                }else{
+                    btree = new BTree(args[1], cacheSize);
                 }
-                
-				
 
                 //queryFile
                 queryFile = new File(args[2]);
                 if(!queryFile.exists()){
                     throw new Exception("ERROR: queryFile does not exist");
                 }
-			
-                
                 
 				//debugLevel
                 debugLevel = 0; //default
@@ -74,15 +68,12 @@ public class GeneBankSearch{
 						throw new Exception("ERROR: Invalid debug level");
 					}
 				}
-
 				
-				
-                reader = new FileIO(args[1]); //this is just the btree file
+                reader = new FileIO(args[1]);
 				Scanner fScan = new Scanner(queryFile);
                 String dnaSequence;
                 long sequence;
                 int frequency;
-                BTree btree = new BTree(args[1], cacheSize);
                 sequenceLength = btree.getSeqLen();
                 while(fScan.hasNextLine()){
                     dnaSequence = fScan.nextLine();
@@ -114,23 +105,8 @@ public class GeneBankSearch{
                     }
                     sequence = sequence << 1; //shift by 1 for first index to be 0
                     
-                    int frequencey = btree.get(sequence);
-                    
-                    System.out.println(dnaSequence + ": " + frequencey);
-                    
-
-                    /*Frequency = reader.Search(sequence);        
-                     *
-                     * TODO: 
-                     *  implement here or in FileIO.java
-                     *      if here, Create bTree, then iterate through each query sequence, loading all nodes in tree and checking keys -- cache will do nothing.
-                     *          else, Create Btree, then iterate through all nodes in tree, checking if any key is contained in keys[] -- again, cache does nothing
-                     *          else, change bTree or cache to not create cache w size 0, then create cache here and use that to store all query sequences, removing each sequence when found...?
-                     * 
-                     */                  
-
-                    //sequence and frequncy are printed
-                    System.out.println("original: " + dnaSequence + "\tfrequency: " + frequency);     //TODO: check sample query outputs
+                    frequency = btree.get(sequence);
+                    System.out.println(dnaSequence + ": " + frequency);
                 }
                 fScan.close();
 				
