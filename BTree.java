@@ -233,24 +233,4 @@ public class BTree {
     public int getSeqLen() {
     	return seqLen;
     }
-
-    private void inOrder(BTreeNode node){
-        if (node == null){
-            return;
-        }else{
-            BTreeNode current = node;
-        }
-
-        int numChildren = node.getNumChildren();
-        Stack<BTreeNode> s = new Stack<BTreeNode>();
-
-        for(int i = numChildren; i>(numChildren/2); i--){
-            //s.push(node.children[i]);
-        }
-        s.push(node);
-        for(int i = numChildren/2; i >= 0; i--){
-            //s.push(node.children[i]);
-        }
-        //pop next off stack, repeat....?
-    }
 }
