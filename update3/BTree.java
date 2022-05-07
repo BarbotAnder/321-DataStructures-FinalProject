@@ -1,6 +1,4 @@
 import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Stack;
 
 public class BTree {
     private final int degree;
@@ -159,7 +157,7 @@ public class BTree {
         }
     }
 
-    private void fileDump() throws IOException {  //just for debugging
+    private void dump() throws IOException {
         System.out.println("DUMP ----------");
         for (long i = 0; i < file.maxIndex() - 1; i++) {
             BTreeNode node = loadNode(i);
@@ -167,46 +165,6 @@ public class BTree {
         }
     }
 
-    public void dump() throws IOException {
-        dumpInner(0);
-    }
-
-    private void dumpInner(long fileIndex) throws IOException {
-        BTreeNode node = loadNode(fileIndex);
-
-        if (node.isLeaf) {
-            for (TreeObject obj : node.keys) {
-                // If the value isn't the sentinal value
-                if (obj.sequence != -1) {
-                    System.out.println(obj.toString(seqLen) + ": " + obj.frequency);
-                }
-            }
-        } else {
-            for (Long child : node.children) {
-                dumpInner(child);
-            }
-        }
-    }
-
-    //This uses and prints to a dump file
-    public void dumpStream(long fileIndex, PrintStream stream) throws IOException {
-        BTreeNode node = loadNode(fileIndex);
-
-        if (node.isLeaf) {
-            for (TreeObject obj : node.keys) {
-                // If the value isn't the sentinal value
-                if (obj.sequence != -1) {
-                	
-                    stream.append(obj.toString(seqLen) + ": " + obj.frequency + "\n");
-                }
-            }
-        } else {
-            for (Long child : node.children) {
-                dumpStream(child, stream);
-            }
-        }
-    }
-    
     private BTreeNode loadNode(long fileIndex) throws IOException {
         if (fileIndex == 0) {
             return root;
@@ -229,8 +187,5 @@ public class BTree {
 
         // Write to disk
         file.write(node);
-    }
-    public int getSeqLen() {
-    	return seqLen;
     }
 }
