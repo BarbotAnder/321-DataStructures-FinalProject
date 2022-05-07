@@ -1,546 +1,236 @@
-import java.io.RandomAccessFile;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Stack;
 
 public class BTree {
+    private final int degree;
+    private final int seqLen;
 
-  private int T;
-  private Node root;
-  private RandomAccessFile RAF;
-  private long nextAdd;
-  private int byteLength;
-//add 1 to array to start at one. This allows us to copy the book's code exactly
-  public class Node {
-    int n;
-    TreeObject key[]; //= new int[2t - 1]
-    long child[]; // = new Node[2t]
-    long thisAddress;
-    long parentAddress;
-    int metaLength = 0;
-
-    boolean leaf = true;
-
-    public Node(int t, long parentAddress, long thisAddress) {
-        key = new TreeObject[2 * t - 1];
-        child = new long[2 * t];
+    private BTreeNode root;
+    private Cache cache;
+    private FileIO file;
+    
+    // Create a BTree in the specified file.
+    public BTree(String fileName, int cacheSize, int degree, int seqLen) throws IOException {
+        this.file = new FileIO(fileName, degree, seqLen);
+        this.cache = new Cache(cacheSize);
+        this.degree = degree;
+        this.seqLen = seqLen;
+        this.root = new BTreeNode(0);
+        this.root.keys.add(new TreeObject(-1));
     }
 
-    public Node(long address) {
-
+    // Load a BTree from the specified file.
+    public BTree(String fileName, int cacheSize) throws IOException {
+        this.file = new FileIO(fileName);
+        this.cache = new Cache(cacheSize);
+        this.degree = this.file.degree;
+        this.seqLen = this.file.seqLen;
+        this.root = this.file.read(0);
     }
 
-    /*
-     BTree_Insert_nonfull(x, k) **PseudoCode**
-    1 i = x.n
-    2 if (x.leaf) {
-        while(i >= 1 && k < x.keyi) {
-          x.key(i+1) = keyj
-          i++
-        }
-        x.key(i+1) = k
-        x.n++
-        DISK_WRITE(x)
-    } else {
-        while(i >= 1 && k < x.keyi) {
-          i--
-        }
-        i++
-        DISK_READ(x, c1)
-    }
-    if (x.ci.n = 2t-1) {
-      BTree_Split.child(x, i, x.ci)
-      if (k > x.keyi) {
-        i++
-      }
-      BTree_Insert_nonfull(x.ci, k)
-    } else BTree_Insert_nonfull(x.ci, k)
+    public void insert(long sequence) throws IOException {
+        // Refer to https://webdocs.cs.ualberta.ca/~holte/T26/ins-b-tree.html
 
-    BTree_Search(r, k)
-    if(r == null) {
-      return r;
-    }
-    if (k = r.key) {
-      return r;
-    }
-    if (k < r.key) {
-      return BSTSearch(r.left, k);
-    } else {
-      return BSTSearch(r.right, k);
-    }
-    */
-  }
+        // 1. Find the target leaf node
+        long fileIndex = search(sequence);
 
-  /*
-  B-TREE-INSERT(T, k)
-    1 r = T.root
-    2 if r.n == 2t - 1
-    3   s = ALLOCATE-NODE()
-    4   T.root = s
-    5   s.leaf = FALSE
-    6   s.n = 0
-    7   s.c1 = r
-    8   B-TREE-SPLIT-CHILD(s, 1, r) //current node, child, node to be split
-    9   B-TREE-INSERT-NONFULL(s, k)
-    10 else B-TREE-INSERT-NONFULL(r, k)
-  */
+        // 2. Add the value to the node
+        BTreeNode node = loadNode(fileIndex);
+        for (int i = 0; i < node.keys.size(); i++) {
+            if (node.keys.get(i).sequence == sequence) {
+                node.keys.get(i).frequency++;
+                saveNode(node);
+                return;
 
-  public String Find(int k) {
-  
-  if(k < 1) {
-    return null;
-  }
-  int i = 0;
-  Queue<Node> q = new LinkedList<Node>();
-  q.add(root);
-  while(!q.isEmpty()) {
-    Node n = q.remove();
-    if (k == i) {
-      return n.toString();
-    } else {
-      i++;
-    }
-    if (!n.leaf) {
-      for (int j = 1; j <= n.n+1; j++) {
-        Node child = new Node(n.child[i]);
-        q.add(child);
-      }
-    }
-  }
-  return null;
-  }
-
-  public BTree(int t) {
-    T = t;
-    root = new Node(t, -1, 0);
-    root.n = 0;
-    root.leaf = true;
-  }
-
-  //Search the key
-  public Node Search(Node x, int key) {
-    int i = 0;
-    if (x == null)
-      return x;
-    for (i = 0; i < x.n; i++) {
-      if (key < x.key[i]) {
-        break;
-      }
-      if (key == x.key[i]) {
-        return x;
-      }
-    }
-    if (x.leaf) {
-      return null;
-    } else {
-      return Search(x.child[i], key);
-    }
-  }
-
-  //Remove function
-  public void Remove(Node x, int key) {
-    int pos = x.Find(key);
-    if (pos != -1) {
-      if (x.leaf) {
-        int i = 0;
-        for (i = 0; i < x.n && x.key[i] != key; i++) {
-        }
-        for (; i < x.n; i++) {
-          if (i != 2 * T - 2) {
-            x.key[i] = x.key[i + 1];
-          }
-        }
-        x.n--;
-        return;
-      }
-      if (!x.leaf) {
-
-        Node pred = x.child[pos];
-        int predKey = 0;
-        if (pred.n >= T) {
-          for (;;) {
-            if (pred.leaf) {
-              System.out.println(pred.n);
-              predKey = pred.key[pred.n - 1];
-              break;
-            } else {
-              pred = pred.child[pred.n];
+            } else if (sequence < node.keys.get(i).sequence) {
+                node.keys.add(i, new TreeObject(sequence));
+                saveNode(node);
+                split(node);
+                return;
             }
-          }
-          Remove(pred, predKey);
-          x.key[pos] = predKey;
-          return;
+        }
+        
+        // If we got all the way to the end without finding a spot, just add value to end of
+        node.keys.add(new TreeObject(sequence));
+        saveNode(node);
+        split(node);
+    }
+
+    // Splits the node at fileIndex if needed
+    private void split(BTreeNode node) throws IOException {
+        if (node.keys.size() < degree * 2) {
+            return;
         }
 
-        long nextNode = x.child[pos + 1];
-        if (nextNode.n >= T) {
-          TreeObject nextKey = nextNode.key[0];
-          if (!nextNode.leaf) {
-            nextNode = nextNode.child[0];
-            for (;;) {
-              if (nextNode.leaf) {
-                nextKey = nextNode.key[nextNode.n - 1];
-                break;
-              } else {
-                nextNode = nextNode.child[nextNode.n];
-              }
+        // The old node becomes the left node
+        // The last (M-1)/2 values move to the new right node
+        // The middle value gets added to the parent node
+        
+        BTreeNode right = new BTreeNode(file.nextIndex());
+        right.isLeaf = node.isLeaf;
+        right.parentIndex = node.parentIndex;
+
+        right.keys.addAll(node.keys.subList(degree, node.keys.size()));
+        node.keys.subList(degree, node.keys.size()).clear();
+
+        if (!right.isLeaf) {
+            right.children.addAll(node.children.subList(degree, node.children.size()));
+            node.children.subList(degree, node.children.size()).clear();
+        }
+
+        // Update parentIndex on children of the right node
+        for (Long childIndex : right.children) {
+            BTreeNode child = loadNode(childIndex);
+            child.parentIndex = right.fileIndex;
+            saveNode(child);
+        }
+
+        // If node is the root
+        if (node.parentIndex == -1) {
+            root = new BTreeNode(0);
+            root.isLeaf = false;
+            right.parentIndex = 0;
+            node.parentIndex = 0;
+            node.fileIndex = file.nextIndex();
+
+            // Update parentIndex on children of the left node
+            for (Long childIndex : node.children) {
+                BTreeNode child = loadNode(childIndex);
+                child.parentIndex = node.fileIndex;
+                saveNode(child);
             }
-          }
-          Remove(nextNode, nextKey);
-          x.key[pos] = nextKey;
-          return;
-        }
 
-        int temp = pred.n + 1;
-        pred.key[pred.n++] = x.key[pos];
-        for (int i = 0, j = pred.n; i < nextNode.n; i++) {
-          pred.key[j++] = nextNode.key[i];
-          pred.n++;
-        }
-        for (int i = 0; i < nextNode.n + 1; i++) {
-          pred.child[temp++] = nextNode.child[i];
-        }
+            long middle = right.keys.get(0).sequence;
+            root.keys.add(new TreeObject(-1));
+            root.keys.add(new TreeObject(middle));
 
-        x.child[pos] = pred;
-        for (int i = pos; i < x.n; i++) {
-          if (i != 2 * T - 2) {
-            x.key[i] = x.key[i + 1];
-          }
-        }
-        for (int i = pos + 1; i < x.n + 1; i++) {
-          if (i != 2 * T - 1) {
-            x.child[i] = x.child[i + 1];
-          }
-        }
-        x.n--;
-        if (x.n == 0) {
-          if (x == root) {
-            root = x.child[0];
-          }
-          x = x.child[0];
-        }
-        Remove(pred, key);
-        return;
-      }
-    } else {
-      for (pos = 0; pos < x.n; pos++) {
-        if (x.key[pos] > key) {
-          break;
-        }
-      }
-      Node tmp = x.child[pos];
-      if (tmp.n >= T) {
-        Remove(tmp, key);
-        return;
-      }
-      if (true) {
-        Node nb = null;
-        int devider = -1;
+            root.children.add(node.fileIndex);
+            root.children.add(right.fileIndex);
 
-        if (pos != x.n && x.child[pos + 1].n >= T) {
-          devider = x.key[pos];
-          nb = x.child[pos + 1];
-          x.key[pos] = nb.key[0];
-          tmp.key[tmp.n++] = devider;
-          tmp.child[tmp.n] = nb.child[0];
-          for (int i = 1; i < nb.n; i++) {
-            nb.key[i - 1] = nb.key[i];
-          }
-          for (int i = 1; i <= nb.n; i++) {
-            nb.child[i - 1] = nb.child[i];
-          }
-          nb.n--;
-          Remove(tmp, key);
-          return;
-        } else if (pos != 0 && x.child[pos - 1].n >= T) {
-
-          devider = x.key[pos - 1];
-          nb = x.child[pos - 1];
-          x.key[pos - 1] = nb.key[nb.n - 1];
-          Node child = nb.child[nb.n];
-          nb.n--;
-
-          for (int i = tmp.n; i > 0; i--) {
-            tmp.key[i] = tmp.key[i - 1];
-          }
-          tmp.key[0] = devider;
-          for (int i = tmp.n + 1; i > 0; i--) {
-            tmp.child[i] = tmp.child[i - 1];
-          }
-          tmp.child[0] = child;
-          tmp.n++;
-          Remove(tmp, key);
-          return;
+            saveNode(node);
+            saveNode(right);
+            saveNode(root);
         } else {
-          Node lt = null;
-          Node rt = null;
-          boolean last = false;
-          if (pos != x.n) {
-            devider = x.key[pos];
-            lt = x.child[pos];
-            rt = x.child[pos + 1];
-          } else {
-            devider = x.key[pos - 1];
-            rt = x.child[pos];
-            lt = x.child[pos - 1];
-            last = true;
-            pos--;
-          }
-          for (int i = pos; i < x.n - 1; i++) {
-            x.key[i] = x.key[i + 1];
-          }
-          for (int i = pos + 1; i < x.n; i++) {
-            x.child[i] = x.child[i + 1];
-          }
-          x.n--;
-          lt.key[lt.n++] = devider;
+            BTreeNode parent = loadNode(node.parentIndex);
+            long middle = right.keys.get(0).sequence;
 
-          for (int i = 0, j = lt.n; i < rt.n + 1; i++, j++) {
-            if (i < rt.n) {
-              lt.key[j] = rt.key[i];
+            int loc = parent.children.indexOf(node.fileIndex);
+            parent.children.add(loc + 1, right.fileIndex);
+            parent.keys.add(loc + 1, new TreeObject(middle));
+            
+            saveNode(node);
+            saveNode(right);
+            saveNode(parent);
+
+            split(parent);
+        }
+    }
+
+    public int get(long sequence) throws IOException {
+        long targetNode = search(sequence);
+        BTreeNode target = loadNode(targetNode);
+
+        for (int i = 0; i < target.keys.size(); i++) {
+            if (target.keys.get(i).sequence == sequence) {
+                return target.keys.get(i).frequency;
             }
-            lt.child[j] = rt.child[i];
-          }
-          lt.n += rt.n;
-          if (x.n == 0) {
-            if (x == root) {
-              root = x.child[0];
+        }
+
+        return 0;
+    }
+
+    public void flush() throws IOException {
+        file.write(root);
+    }
+
+    // Find the fileIndex of the node that contains a given sequence
+    private long search(long sequence) throws IOException {
+        return searchInner(sequence, root);
+    }
+
+    private long searchInner(long sequence, BTreeNode node) throws IOException {
+        if (!node.isLeaf) {
+            long nextFileIndex = node.next(sequence);
+            BTreeNode nextNode = loadNode(nextFileIndex);
+            return searchInner(sequence, nextNode);
+        } else {
+            return node.fileIndex;
+        }
+    }
+
+    private void fileDump() throws IOException {  //just for debugging
+        System.out.println("DUMP ----------");
+        for (long i = 0; i < file.maxIndex() - 1; i++) {
+            BTreeNode node = loadNode(i);
+            node.debug();
+        }
+    }
+
+    public void dump() throws IOException {
+        dumpInner(0);
+    }
+
+    private void dumpInner(long fileIndex) throws IOException {
+        BTreeNode node = loadNode(fileIndex);
+
+        if (node.isLeaf) {
+            for (TreeObject obj : node.keys) {
+                // If the value isn't the sentinal value
+                if (obj.sequence != -1) {
+                    System.out.println(obj.toString(seqLen) + ": " + obj.frequency);
+                }
             }
-            x = x.child[0];
-          }
-          Remove(lt, key);
-          return;
+        } else {
+            for (Long child : node.children) {
+                dumpInner(child);
+            }
         }
-      }
-    }
-  }
-
-    /*
-    B-TREE-CREATE(T)
-    1 x = ALLOCATE-NODE()
-    2 x.leaf = TRUE
-    3 x.n = 0
-    4 T.root = x
-    5 DISK_WRITE(x)
-
-    B-TREE_SPLIT_CHILD(x, i, y) //x.ci = y
-    1 z = ALLOCATE_NODE.
-    2 z.leaf = y.leaf
-    3 z.n = t - 1
-    4 for j = 1 to t - 1
-    5   z.keyj = y.key(j+t)
-    6 if not y.leaf
-    7   for j = 1 to t
-    8       z.cj = y.c(j+t)
-    9 y.n = t - 1
-    10 for j = x.n + 1 downto i C 1
-    11   x.c(j+1) = x.cj
-    12 x.c(i+1) = z
-    13 for j = x.n downto i
-    14   x.key(j+1) = x.keyj
-    15 x.keyi = y.keyt
-    16 x.n = x.n + 1
-    17 DISK_WRITE(y)
-    18 DISK_WRITE(z)
-    19 DISK_WRITE(x)
-
-    BTree_Search(x, k)
-    1 i = 1
-    2 while(i <= x.n && k > x.keyi) {
-    3     i++}
-    4 if (i <= x.n && k == x.key) {
-    5     return(x, i) }
-    6 if (x.leaf = true) {
-    7     return null }
-    8 else DISK_READ(x.ci, k)
-    9 BTree_Search(x.ci,k)
-
-
-    BST Minimum(r) //left most node
-    if (r == null) {
-      return null;
-    }
-    if (r.left == null) {
-      return r;
-    } else {
-      return BSTMin(r.left);
     }
 
-    Example code:
-    // Inserting a key on a B-tree in Java
+    //This uses and prints to a dump file
+    public void dumpStream(long fileIndex, PrintStream stream) throws IOException {
+        BTreeNode node = loadNode(fileIndex);
 
-import java.util.Stack;
-
-public class BTree {
-
-  private int T;
-
-  public class Node {
-    int n;
-    int key[] = new int[2t - 1];
-    Node child[] = new Node[2t];
-    boolean leaf = true;
-
-    public int Find(int k) {
-      for (int i = 0; i < this.n; i++) {
-        if (this.key[i] == k) {
-          return i;
+        if (node.isLeaf) {
+            for (TreeObject obj : node.keys) {
+                // If the value isn't the sentinal value
+                if (obj.sequence != -1) {
+                	
+                    stream.append(obj.toString(seqLen) + ": " + obj.frequency + "\n");
+                }
+            }
+        } else {
+            for (Long child : node.children) {
+                dumpStream(child, stream);
+            }
         }
-      }
-      return -1;
-    };
-  }
-
-  public BTree(int t) {
-    T = t;
-    root = new Node();
-    root.n = 0;
-    root.leaf = true;
-  }
-
-  private Node root;
-
-  // Split function
-  private void Split(Node x, int pos, Node y) {
-    Node z = new Node();
-    z.leaf = y.leaf;
-    z.n = T - 1;
-    for (int j = 0; j < T - 1; j++) {
-      z.key[j] = y.key[j + T];
     }
-    if (!y.leaf) {
-      for (int j = 0; j < T; j++) {
-        z.child[j] = y.child[j + T];
-      }
-    }
-    y.n = T - 1;
-    for (int j = x.n; j >= pos + 1; j--) {
-      x.child[j + 1] = x.child[j];
-    }
-    x.child[pos + 1] = z;
-
-    for (int j = x.n - 1; j >= pos; j--) {
-      x.key[j + 1] = x.key[j];
-    }
-    x.key[pos] = y.key[T - 1];
-    x.n = x.n + 1;
-  }
-
-  // Insert the key
-  public void Insert(final int key) {
-    Node r = root;
-    if (r.n == 2 * T - 1) {
-      Node s = new Node();
-      root = s;
-      s.leaf = false;
-      s.n = 0;
-      s.child[0] = r;
-      Split(s, 0, r);
-      _Insert(s, key);
-    } else {
-      _Insert(r, key);
-    }
-  }
-
-  // Insert the node
-  final private void _Insert(Node x, int k) {
-
-    if (x.leaf) {
-      int i = 0;
-      for (i = x.n - 1; i >= 0 && k < x.key[i]; i--) {
-        x.key[i + 1] = x.key[i];
-      }
-      x.key[i + 1] = k;
-      x.n = x.n + 1;
-    } else {
-      int i = 0;
-      for (i = x.n - 1; i >= 0 && k < x.key[i]; i--) {
-      }
-      ;
-      i++;
-      Node tmp = x.child[i];
-      if (tmp.n == 2 * T - 1) {
-        Split(x, i, tmp);
-        if (k > x.key[i]) {
-          i++;
+    
+    private BTreeNode loadNode(long fileIndex) throws IOException {
+        if (fileIndex == 0) {
+            return root;
         }
-      }
-      _Insert(x.child[i], k);
+
+        // Attempt to get the node from the cache
+        BTreeNode node = cache.get(fileIndex);
+
+        if (node == null) {
+            node = file.read(fileIndex);
+            cache.add(node);
+        }
+
+        return node;
     }
 
-  }
+    private void saveNode(BTreeNode node) throws IOException {
+        // Remove outdated node from cache
+        cache.remove(node.fileIndex);
 
-  public void Show() {
-    Show(root);
-  }
-
-  public void Remove(int key) {
-    Node x = Search(root, key);
-    if (x == null) {
-      return;
+        // Write to disk
+        file.write(node);
     }
-    Remove(root, key);
-  }
-
-  public void Task(int a, int b) {
-    Stack<Integer> st = new Stack<>();
-    FindKeys(a, b, root, st);
-    while (st.isEmpty() == false) {
-      this.Remove(root, st.pop());
+    public int getSeqLen() {
+    	return seqLen;
     }
-  }
-
-  private void FindKeys(int a, int b, Node x, Stack<Integer> st) {
-    int i = 0;
-    for (i = 0; i < x.n && x.key[i] < b; i++) {
-      if (x.key[i] > a) {
-        st.push(x.key[i]);
-      }
-    }
-    if (!x.leaf) {
-      for (int j = 0; j < i + 1; j++) {
-        FindKeys(a, b, x.child[j], st);
-      }
-    }
-  }
-
-  public boolean Contain(int k) {
-    if (this.Search(root, k) != null) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  // Show the node
-  private void Show(Node x) {
-    assert (x == null);
-    for (int i = 0; i < x.n; i++) {
-      System.out.print(x.key[i] + " ");
-    }
-    if (!x.leaf) {
-      for (int i = 0; i < x.n + 1; i++) {
-        Show(x.child[i]);
-      }
-    }
-  }
-
-  public static void main(String[] args) {
-    BTree b = new BTree(3);
-    b.Insert(8);
-    b.Insert(9);
-    b.Insert(10);
-    b.Insert(11);
-    b.Insert(15);
-    b.Insert(20);
-    b.Insert(17);
-
-    b.Show();
-
-    b.Remove(10);
-    System.out.println();
-    b.Show();
-  }
-}
-    */
 }
