@@ -1,10 +1,9 @@
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Stack;
 
 public class BTree {
-    private final int degree;
-    private final int seqLen;
+    public final int degree;
+    public final int seqLen;
 
     private BTreeNode root;
     private Cache cache;

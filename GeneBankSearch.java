@@ -8,116 +8,98 @@
  */
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 //will pull from DiskReadWrite Search
 public class GeneBankSearch{
+    public static void printUsage() {
+		System.out.println("java GeneBankSearch <0/1(no/with Cache)> <btree file> <query file> [<cache size>] [<debug level>]");
+	}
 
     public static void main(String[] args) {
-		
-		FileIO reader;
-        File bTreeFile;
-        File queryFile;
-        BTree btree;
-
 		int cacheSize;
-        int debugLevel; //don't understand need
-		int degree; //don't understand need
-		int sequenceLength;
-        
-		int argsLength = args.length;
-		try {
-			if(argsLength >= 3 && argsLength <= 5) {//valid args
-                //cache bool
-                if(args[0].equals("1")) {
-                    //<cacheSize>
-					if(args[3] != null) {
-						cacheSize = Integer.parseInt(args[3]);
-						if(cacheSize <= 0) {
-							throw new Exception("ERROR: Invalid cache size value");
-						} // cache is implemented in BTree
-					}else { //args[3] == null
-						throw new Exception("ERROR: No cache size value");
-					}
-				} else if(args[0].equals("0")) {
-					cacheSize = 0;
-				} else { //args[0] is not 1 or 0
-					throw new Exception("ERROR: Invalid cache boolean");
-				}
-				
-                //gets BTreeFile
-                bTreeFile = new File(args[1]);
-                if(!bTreeFile.exists()){
-                    throw new Exception("ERROR: bTreeFile does not exist");
-                }else{
-                    btree = new BTree(args[1], cacheSize);
-                }
+		int debugLevel = 0;
 
-                //queryFile
-                queryFile = new File(args[2]);
-                if(!queryFile.exists()){
-                    throw new Exception("ERROR: queryFile does not exist");
-                }
-                
-				//debugLevel
-                debugLevel = 0; //default
-				if(args.length > 3 && args[3] != null) { // check arg 6 (which is optional)
-					if(args[3].equals("1")) { 
-						debugLevel = 1;
-					}else if(!args[3].equals("0")) {//args[6] != 1 or 0
-						throw new Exception("ERROR: Invalid debug level");
-					}
-				}
-				
-                reader = new FileIO(args[1]);
-				Scanner fScan = new Scanner(queryFile);
-                String dnaSequence;
-                long sequence;
-                int frequency;
-                sequenceLength = btree.getSeqLen();
-                while(fScan.hasNextLine()){
-                    dnaSequence = fScan.nextLine();
-                    dnaSequence = dnaSequence.toLowerCase();
-                    frequency = 0;
-                    sequence = 0;
-                    
-                    
-                    for (int i = 0; i < sequenceLength; i++) {
-                        sequence = sequence << 2;
-
-                        switch (dnaSequence.charAt(i)) {
-                        case 'a':
-                        	sequence = sequence << 2; // shift left because its already 0
-                            break;
-                        case 'c':
-                        	sequence |= 1;
-                        	sequence = sequence << 2; // shift left for the next value
-                        	break;
-                        case 't': 
-                        	sequence |= 3;
-                        	sequence = sequence << 2; // shift left for the next value
-                        	break;
-                        case 'g': 
-                        	sequence |= 2;
-                        	sequence = sequence << 2; // shift left for the next value
-                        	break;
-                        }   
-                    }
-                    sequence = sequence << 1; //shift by 1 for first index to be 0
-                    
-                    frequency = btree.get(sequence);
-                    System.out.println(dnaSequence + ": " + frequency);
-                }
-                fScan.close();
-				
-			}else { //invald # args
-				throw new Exception("ERROR: Invalid usage"); //args > 6 or args < 4
-			}
-		}catch(Exception e){
-			System.out.println(e);
-			System.out.println("USAGE: java GeneBankSearch <0/1(no/with Cache)> <btree file> <query file>\r\n"
-					+ "[<cache size>] [<debug level>]");
+		// did we get the correct number of arguments
+		if (args.length < 3 || args.length > 5) {
+			printUsage();
+			return;
 		}
-    }   
-    
+
+		String bTreeFileName = args[1];
+        String queryFileName = args[2];
+
+		// cache argument
+		if (args[0].equals("0")) {
+			cacheSize = 0;
+		} else if (args[0].equals("1") && args.length >= 4) {
+			cacheSize = Integer.parseInt(args[3]);
+		} else {
+			System.out.println("ERROR: Invalid cache size");
+			printUsage();
+			return;
+		}
+
+		// debug level argument
+		if(args.length == 5) {
+			if(args[4].equals("0")) {
+				debugLevel = 0;
+				
+			} else {
+				System.out.println("ERROR: Invalid debug level");
+				printUsage();
+				return;
+			}
+		}
+
+		try {
+			File queryFile = new File(queryFileName);
+			if(queryFile.exists() && queryFile.isFile()) {
+				BTree btree = new BTree(bTreeFileName, cacheSize);
+				Scanner scan = new Scanner(queryFile);
+
+                while (scan.hasNextLine()) {
+                    String line = scan.nextLine().toLowerCase();
+                    int freq = btree.get(seqToLong(line));
+                    System.out.println(line + ": " + freq);
+                }
+				
+			} else { // file is not valid
+				throw new FileNotFoundException();
+			}	
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+    }
+
+    private static long seqToLong(String seq) {
+		long result = 0;
+		for (char c : seq.toLowerCase().toCharArray()) {
+			switch (c) {
+				case 'a':
+					result = result << 2;
+					break;
+				
+				case 't':
+					result = result << 2;
+					result |= 3;
+					break;
+
+				case 'c':
+					result = result << 2;
+					result |= 1;
+					break;
+
+				case 'g':
+					result = result << 2;
+					result |= 2;
+					break;
+
+				default:
+					return -1;
+			}
+		}
+		return result;
+	}
 }
