@@ -8,13 +8,3 @@ Last Name       | First Name      | GitHub User Name
 Brusse          | Gary             | GBrusse
 Barbot          | Ander           | BarbotAnder
 Tyler           | Bowes           | Tyler-Bowes
-
-# Cache Performance Results
-TBD
-
-# BTree Binary File Format and Layout
-TBD
-
-# Additional Notes
-TBD
-
